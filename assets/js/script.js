@@ -10,15 +10,19 @@ const navbar = document.querySelector("[data-navbar]");
 const navbarLinks = document.querySelectorAll("[data-nav-link]");
 const menuToggleBtn = document.querySelector("[data-menu-toggle-btn]");
 
-menuToggleBtn.addEventListener("click", function () {
-  navbar.classList.toggle("active");
-  this.classList.toggle("active");
-});
+if (navbar && menuToggleBtn) {
+  menuToggleBtn.addEventListener("click", function () {
+    navbar.classList.toggle("active");
+    this.classList.toggle("active");
+  });
+}
 
 for (let i = 0; i < navbarLinks.length; i++) {
   navbarLinks[i].addEventListener("click", function () {
-    navbar.classList.toggle("active");
-    menuToggleBtn.classList.toggle("active");
+    if (navbar && menuToggleBtn) {
+      navbar.classList.remove("active");
+      menuToggleBtn.classList.remove("active");
+    }
   });
 }
 
@@ -32,12 +36,14 @@ const header = document.querySelector("[data-header]");
 const backTopBtn = document.querySelector("[data-back-top-btn]");
 
 window.addEventListener("scroll", function () {
-  if (window.scrollY >= 100) {
-    header.classList.add("active");
-    backTopBtn.classList.add("active");
-  } else {
-    header.classList.remove("active");
-    backTopBtn.classList.remove("active");
+  if (header && backTopBtn) {
+    if (window.scrollY >= 100) {
+      header.classList.add("active");
+      backTopBtn.classList.add("active");
+    } else {
+      header.classList.remove("active");
+      backTopBtn.classList.remove("active");
+    }
   }
 });
 
@@ -55,10 +61,12 @@ const searchCloseBtn = document.querySelector("[data-search-close-btn]");
 const searchBoxElems = [searchBtn, searchSubmitBtn, searchCloseBtn];
 
 for (let i = 0; i < searchBoxElems.length; i++) {
-  searchBoxElems[i].addEventListener("click", function () {
-    searchContainer.classList.toggle("active");
-    document.body.classList.toggle("active");
-  });
+  if (searchBoxElems[i] && searchContainer) {
+    searchBoxElems[i].addEventListener("click", function () {
+      searchContainer.classList.toggle("active");
+      document.body.classList.toggle("active");
+    });
+  }
 }
 
 
@@ -73,6 +81,8 @@ let deliveryBoyMove = -80;
 let lastScrollPos = 0;
 
 window.addEventListener("scroll", function () {
+
+  if (!deliveryBoy) return;
 
   let deliveryBoyTopPos = deliveryBoy.getBoundingClientRect().top;
 
@@ -90,3 +100,28 @@ window.addEventListener("scroll", function () {
   }
 
 });
+
+
+
+/**
+ * password visibility toggle
+ */
+
+const passwordToggleBtns = document.querySelectorAll("[data-password-toggle]");
+
+for (let i = 0; i < passwordToggleBtns.length; i++) {
+  passwordToggleBtns[i].addEventListener("click", function () {
+    const target = document.querySelector(this.dataset.passwordToggle);
+
+    if (!target) return;
+
+    const isHidden = target.type === "password";
+    target.type = isHidden ? "text" : "password";
+    this.setAttribute("aria-label", isHidden ? "Hide password" : "Show password");
+
+    const icon = this.querySelector("ion-icon");
+    if (icon) {
+      icon.setAttribute("name", isHidden ? "eye-off-outline" : "eye-outline");
+    }
+  });
+}

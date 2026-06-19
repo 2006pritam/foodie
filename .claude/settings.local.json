@@ -1,0 +1,18 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(java -version)",
+      "Bash(javac -version)",
+      "Bash(powershell -Command \"Invoke-WebRequest -Uri ''https://repo1.maven.org/maven2/org/postgresql/postgresql/42.7.4/postgresql-42.7.4.jar'' -OutFile ''c:/Program Files/Apache Software Foundation/Tomcat 9.0/webapps/foodie/WEB-INF/lib/postgresql-42.7.4.jar''\")",
+      "Bash(TOMCAT=\"c:/Program Files/Apache Software Foundation/Tomcat 9.0\")",
+      "Bash(APP=\"$TOMCAT/webapps/foodie\")",
+      "Bash(SERVLET_JAR=\"$TOMCAT/lib/servlet-api.jar\")",
+      "Bash(PG_JAR=\"$APP/WEB-INF/lib/postgresql-42.7.4.jar\")",
+      "Bash(SRC=\"$APP/WEB-INF/src\")",
+      "Bash(OUT=\"$APP/WEB-INF/classes\")",
+      "Bash(__NEW_LINE_b9beea1e10a0276b__ mkdir -p \"$OUT/com/foodie/model\" \"$OUT/com/foodie/util\" \"$OUT/com/foodie/db\")",
+      "Bash(__NEW_LINE_b9beea1e10a0276b__ javac -cp \"$SERVLET_JAR:$PG_JAR:$OUT\" -d \"$OUT\" -source 11 -target 11 \"$SRC/com/foodie/model/User.java\" \"$SRC/com/foodie/util/PasswordUtil.java\" \"$SRC/com/foodie/db/DatabaseManager.java\" \"$SRC/com/foodie/db/UserDao.java\" \"$SRC/com/foodie/web/FoodieServlet.java\")",
+      "Bash(__NEW_LINE_df571a5441f180bd__ javac -cp \"$SERVLET_JAR;$PG_JAR;$OUT\" -d \"$OUT\" \"$SRC/com/foodie/model/User.java\" \"$SRC/com/foodie/util/PasswordUtil.java\" \"$SRC/com/foodie/db/DatabaseManager.java\" \"$SRC/com/foodie/db/UserDao.java\" \"$SRC/com/foodie/web/FoodieServlet.java\")"
+    ]
+  }
+}

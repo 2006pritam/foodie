@@ -36,8 +36,12 @@
 </head>
 
 <body id="top">
+<%
+    String _sessionUser = (String) session.getAttribute("userName");
+    boolean _loggedIn   = (_sessionUser != null);
+%>
 
-  <!-- 
+  <!--
     - #HEADER
   -->
 
@@ -68,7 +72,7 @@
           </li>
 
           <li class="nav-item">
-            <a href="#" class="navbar-link" data-nav-link>Contact Us</a>
+            <a href="#contact" class="navbar-link" data-nav-link>Contact Us</a>
           </li>
 
         </ul>
@@ -79,7 +83,13 @@
           <ion-icon name="search-outline"></ion-icon>
         </button>
 
-        <button class="btn btn-hover">Reservation</button>
+        <a href="#reservation" class="btn btn-hover">Reservation</a>
+
+        <% if (_loggedIn) { %>
+          <a href="logout" class="btn btn-hover auth-header-btn">Logout (<%= _sessionUser %>)</a>
+        <% } else { %>
+          <a href="login" class="btn btn-hover auth-header-btn">Login / Sign Up</a>
+        <% } %>
 
         <button class="nav-toggle-btn" aria-label="Toggle Menu" data-menu-toggle-btn>
           <span class="line top"></span>
@@ -135,8 +145,6 @@
             <h2 class="h1 hero-title">Supper delicious Burger in town!</h2>
 
             <p class="hero-text">Food is any substance consumed to provide nutritional support for an organism.</p>
-
-            <button class="btn">Book A Table</button>
 
           </div>
 
@@ -381,7 +389,7 @@
 
             </ul>
 
-            <button class="btn btn-hover">Order Now</button>
+            <a href="login" class="btn btn-hover">Order Now</a>
 
           </div>
 
@@ -444,7 +452,7 @@
 
                   <div class="badge">-15%</div>
 
-                  <button class="btn food-menu-btn">Order Now</button>
+                  <a href="login" class="btn food-menu-btn">Order Now</a>
                 </div>
 
                 <div class="wrapper">
@@ -465,9 +473,9 @@
 
                   <p class="price-text">Price:</p>
 
-                  <data class="price">$49.00</data>
+                  <data class="price">&#8377;49.00</data>
 
-                  <del class="del" value="69.00">$69.00</del>
+                  <del class="del" value="69.00">&#8377;69.00</del>
 
                 </div>
 
@@ -483,7 +491,7 @@
 
                   <div class="badge">-10%</div>
 
-                  <button class="btn food-menu-btn">Order Now</button>
+                  <a href="login" class="btn food-menu-btn">Order Now</a>
                 </div>
 
                 <div class="wrapper">
@@ -504,9 +512,9 @@
 
                   <p class="price-text">Price:</p>
 
-                  <data class="price" value="29.00">$29.00</data>
+                  <data class="price" value="29.00">&#8377;29.00</data>
 
-                  <del class="del">$39.00</del>
+                  <del class="del">&#8377;39.00</del>
 
                 </div>
 
@@ -522,7 +530,7 @@
 
                   <div class="badge">-25%</div>
 
-                  <button class="btn food-menu-btn">Order Now</button>
+                  <a href="login" class="btn food-menu-btn">Order Now</a>
                 </div>
 
                 <div class="wrapper">
@@ -543,9 +551,9 @@
 
                   <p class="price-text">Price:</p>
 
-                  <data class="price" value="49.00">$49.00</data>
+                  <data class="price" value="49.00">&#8377;49.00</data>
 
-                  <del class="del">$69.00</del>
+                  <del class="del">&#8377;69.00</del>
 
                 </div>
 
@@ -561,7 +569,7 @@
 
                   <div class="badge">-20%</div>
 
-                  <button class="btn food-menu-btn">Order Now</button>
+                  <a href="login" class="btn food-menu-btn">Order Now</a>
                 </div>
 
                 <div class="wrapper">
@@ -582,9 +590,9 @@
 
                   <p class="price-text">Price:</p>
 
-                  <data class="price" value="59.00 ">$59.00</data>
+                  <data class="price" value="59.00 ">&#8377;59.00</data>
 
-                  <del class="del">$69.00</del>
+                  <del class="del">&#8377;69.00</del>
 
                 </div>
 
@@ -600,7 +608,7 @@
 
                   <div class="badge">-5%</div>
 
-                  <button class="btn food-menu-btn">Order Now</button>
+                  <a href="login" class="btn food-menu-btn">Order Now</a>
                 </div>
 
                 <div class="wrapper">
@@ -621,9 +629,9 @@
 
                   <p class="price-text">Price:</p>
 
-                  <data class="price" value="49.00">$49.00</data>
+                  <data class="price" value="49.00">&#8377;49.00</data>
 
-                  <del class="del">$69.00</del>
+                  <del class="del">&#8377;69.00</del>
 
                 </div>
 
@@ -639,7 +647,7 @@
 
                   <div class="badge">-15%</div>
 
-                  <button class="btn food-menu-btn">Order Now</button>
+                  <a href="login" class="btn food-menu-btn">Order Now</a>
                 </div>
 
                 <div class="wrapper">
@@ -660,9 +668,9 @@
 
                   <p class="price-text">Price:</p>
 
-                  <data class="price" value="49.00">$49.00</data>
+                  <data class="price" value="49.00">&#8377;49.00</data>
 
-                  <del class="del">$69.00</del>
+                  <del class="del">&#8377;69.00</del>
 
                 </div>
 
@@ -699,7 +707,7 @@
               invasion of the 1120s, while it is also known that many restaurants were run by families.
             </p>
 
-            <button class="btn btn-hover">Order Now</button>
+            <a href="login" class="btn btn-hover">Order Now</a>
           </div>
 
           <figure class="cta-banner">
@@ -736,7 +744,7 @@
               invasion of the 1120s, while it is also known that many restaurants were run by families.
             </p>
 
-            <button class="btn btn-hover">Order Now</button>
+            <a href="login" class="btn btn-hover">Order Now</a>
           </div>
 
           <figure class="delivery-banner">
@@ -905,7 +913,7 @@
 
                   <p class="banner-text">Sale off 50% only this week</p>
 
-                  <button class="btn">Order Now</button>
+                  <a href="login" class="btn">Order Now</a>
                 </div>
 
               </div>
@@ -922,7 +930,7 @@
 
                   <p class="banner-text">50% off Now</p>
 
-                  <button class="btn">Order Now</button>
+                  <a href="login" class="btn">Order Now</a>
                 </div>
 
               </div>
@@ -939,7 +947,7 @@
 
                   <p class="banner-text">50% off Now</p>
 
-                  <button class="btn">Order Now</button>
+                  <a href="login" class="btn">Order Now</a>
                 </div>
 
               </div>
@@ -956,7 +964,7 @@
 
                   <p class="banner-text">Sale off 50% only this week</p>
 
-                  <button class="btn">Order Now</button>
+                  <a href="login" class="btn">Order Now</a>
                 </div>
 
               </div>
@@ -1151,7 +1159,7 @@
     - #FOOTER
   -->
 
-  <footer class="footer">
+  <footer class="footer" id="contact">
 
     <div class="footer-top" style="background-image: url('./assets/images/footer-illustration.png')">
       <div class="container">
@@ -1234,9 +1242,10 @@
 
         </ul>
 
-        <form action="" class="footer-form">
+        <form action="home" method="post" class="footer-form" id="reservation">
 
           <p class="footer-list-title">Book a Table</p>
+          <%= request.getAttribute("reservationMessage") == null ? "" : request.getAttribute("reservationMessage") %>
 
           <div class="input-wrapper">
 
