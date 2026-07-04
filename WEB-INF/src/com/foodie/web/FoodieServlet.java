@@ -65,7 +65,13 @@ public class FoodieServlet extends HttpServlet {
     protected void doGet(HttpServletRequest req, HttpServletResponse res)
             throws ServletException, IOException {
 
-        switch (req.getServletPath()) {
+        String servletPath = req.getServletPath();
+        if (servletPath == null || servletPath.isEmpty() || "/".equals(servletPath)) {
+            showHome(req, res, "");
+            return;
+        }
+
+        switch (servletPath) {
             case "/login":
                 if (req.getSession(false) != null && req.getSession(false).getAttribute("userId") != null) {
                     res.sendRedirect(req.getContextPath() + "/dashboard");
