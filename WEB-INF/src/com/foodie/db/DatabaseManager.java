@@ -24,10 +24,9 @@ public final class DatabaseManager {
 
             Properties props = new Properties();
             try (InputStream is = DatabaseManager.class.getClassLoader().getResourceAsStream("db.properties")) {
-                if (is == null) {
-                    throw new IOException("db.properties not found on the classpath.");
+                if (is != null) {
+                    props.load(is);
                 }
-                props.load(is);
             }
 
             String envUrl = System.getenv("DB_URL");
@@ -38,12 +37,13 @@ public final class DatabaseManager {
             username = (envUsername != null && !envUsername.isBlank()) ? envUsername : props.getProperty("db.username");
             password = (envPassword != null && !envPassword.isBlank()) ? envPassword : props.getProperty("db.password");
 
-            if (url == null || url.isEmpty() || url.contains("YOUR_ENDPOINT_HOST")) {
-                throw new IllegalStateException("db.properties is not configured correctly.");
+            if (url != null && !url.isBlank() && !url.contains("YOUR_ENDPOINT_HOST") && !url.contains("YOUR_DATABASE_URL")) {
+                ready = true;
+                LOGGER.info("DatabaseManager initialised and ready.");
+            } else {
+                ready = false;
+                LOGGER.warning("DatabaseManager is not ready because database configuration is missing or still uses placeholder values.");
             }
-
-            ready = true;
-            LOGGER.info("DatabaseManager initialised and ready.");
         } catch (Exception e) {
             ready = false;
             LOGGER.log(Level.SEVERE, "DatabaseManager initialisation failed", e);

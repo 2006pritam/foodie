@@ -9,6 +9,8 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  * Data-access object for the {@code resturent} table in Neon PostgreSQL.
@@ -16,6 +18,8 @@ import java.util.List;
  * All emails are normalised to lower-case before storage / lookup.
  */
 public class UserDao {
+
+    private static final Logger LOGGER = Logger.getLogger(UserDao.class.getName());
 
     // ---------------------------------------------------------------
     // Read operations
@@ -130,7 +134,7 @@ public class UserDao {
             ensureRoleTenantColumns();
             ensureDefaultAdminUser();
         } catch (SQLException e) {
-            throw new RuntimeException("Failed to initialize UserDao", e);
+            LOGGER.log(Level.WARNING, "UserDao initialization skipped because the database is unavailable.", e);
         }
     }
 

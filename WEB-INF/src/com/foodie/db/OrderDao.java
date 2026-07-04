@@ -13,6 +13,8 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  * Data-access object for the {@code orders} / {@code order_items} tables in Neon PostgreSQL.
@@ -21,6 +23,8 @@ import java.util.Map;
  * admin terminal state. Riders claim from a shared pool of ACCEPTED, unassigned orders.
  */
 public class OrderDao {
+
+    private static final Logger LOGGER = Logger.getLogger(OrderDao.class.getName());
 
     public static final String PENDING   = "PENDING";
     public static final String ACCEPTED  = "ACCEPTED";
@@ -32,7 +36,7 @@ public class OrderDao {
         try {
             ensureTables();
         } catch (SQLException e) {
-            throw new RuntimeException("Failed to initialize OrderDao", e);
+            LOGGER.log(Level.WARNING, "OrderDao initialization skipped because the database is unavailable.", e);
         }
     }
 

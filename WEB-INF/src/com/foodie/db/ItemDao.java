@@ -9,14 +9,18 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 public class ItemDao {
+
+    private static final Logger LOGGER = Logger.getLogger(ItemDao.class.getName());
 
     public ItemDao() {
         try {
             ensureItemsTable();
         } catch (SQLException e) {
-            throw new RuntimeException("Failed to initialize ItemDao", e);
+            LOGGER.log(Level.WARNING, "ItemDao initialization skipped because the database is unavailable.", e);
         }
     }
 
