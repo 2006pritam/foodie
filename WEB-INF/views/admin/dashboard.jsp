@@ -1,47 +1,212 @@
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
 <%@ page import="java.util.List" %>
-<%@ page import="com.foodie.model.User" %>
+<%@ page import="com.foodie.model.Order" %>
+<%!
+    String badgeClass(String status) { return status == null ? "pending" : status.toLowerCase(); }
+    String label(String status) {
+        if (status == null) return "Pending";
+        if ("PICKED_UP".equals(status)) return "Picked up";
+        return status.charAt(0) + status.substring(1).toLowerCase();
+    }
+    int num(Object o) { return o == null ? 0 : ((Number) o).intValue(); }
+%>
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <title>Admin Dashboard | Foodie SaaS</title>
-    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/style.css">
+    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/style.css?v=2">
 </head>
 <body class="dashboard-page admin-dashboard">
-<div class="dashboard-shell">
-    <header class="dashboard-header">
-        <div class="dashboard-brand">
-            <h1>Foodie Admin</h1>
-            <p>Manage users, roles, and restaurant operations.</p>
+<div class="admin-dashboard-layout">
+    <aside class="admin-sidebar">
+        <div class="sidebar-brand">
+            <span class="sidebar-logo">Foodie Admin</span>
+            <p>Welcome, admin</p>
         </div>
-        <div class="dashboard-actions">
-            <a class="button outline" href="${pageContext.request.contextPath}/dashboard">Home</a>
-            <a class="button danger" href="${pageContext.request.contextPath}/logout">Logout</a>
-        </div>
-    </header>
 
-    <section class="dashboard-grid">
-        <article class="dashboard-panel large">
-            <h2>Users & Roles</h2>
-            <p>Review existing accounts and adjust access levels for admin, rider, and standard users.</p>
-            <a class="button" href="${pageContext.request.contextPath}/admin/users">Open User Management</a>
-        </article>
+        <nav class="sidebar-nav">
+            <a class="sidebar-link active" href="#">Dashboard</a>
+            <a class="sidebar-link" href="${pageContext.request.contextPath}/admin/items">Manage Items</a>
+            <a class="sidebar-link" href="${pageContext.request.contextPath}/admin/orders">Orders</a>
+            <a class="sidebar-link" href="${pageContext.request.contextPath}/admin/users">Manage Users</a>
+        </nav>
 
-        <article class="dashboard-panel small">
-            <h3>Quick actions</h3>
-            <ul class="dashboard-list">
-                <li>Create a new user account</li>
-                <li>Update role assignments</li>
-                <li>Monitor signups and access</li>
-            </ul>
-        </article>
+        <a class="sidebar-logout" href="${pageContext.request.contextPath}/logout">Logout</a>
+    </aside>
 
-        <article class="dashboard-panel small">
-            <h3>Business insights</h3>
-            <p>Use the admin panel to keep your restaurant SaaS site secure and current.</p>
-        </article>
-    </section>
+    <main class="admin-main">
+        <header class="admin-topbar">
+            <div>
+                <span class="eyebrow">Dashboard Overview</span>
+                <h1>Admin Overview</h1>
+                <p class="topbar-copy">Track orders, view menus, and manage restaurant operations from one unified panel.</p>
+            </div>
+            <div class="admin-topbar-actions">
+                <a class="button outline" href="${pageContext.request.contextPath}/dashboard">Home</a>
+                <a class="button danger" href="${pageContext.request.contextPath}/logout">Logout</a>
+            </div>
+        </header>
+
+        <section class="metric-cards">
+            <article class="metric-card accent-yellow">
+                <span class="metric-label">Total Items</span>
+                <strong><%= num(request.getAttribute("totalItems")) %></strong>
+                <small>In menu</small>
+            </article>
+            <article class="metric-card accent-blue">
+                <span class="metric-label">Total Orders</span>
+                <strong><%= num(request.getAttribute("totalOrders")) %></strong>
+                <small>All time</small>
+            </article>
+            <article class="metric-card accent-purple">
+                <span class="metric-label">Pending</span>
+                <strong><%= num(request.getAttribute("pendingCount")) %></strong>
+                <small>Awaiting review</small>
+            </article>
+            <article class="metric-card accent-green">
+                <span class="metric-label">Delivered</span>
+                <strong><%= num(request.getAttribute("deliveredCount")) %></strong>
+                <small>Completed</small>
+            </article>
+            <article class="metric-card accent-red">
+                <span class="metric-label">Rejected</span>
+                <strong><%= num(request.getAttribute("rejectedCount")) %></strong>
+                <small>Declined</small>
+            </article>
+        </section>
+
+        <section class="dashboard-grid">
+            <article class="dashboard-panel panel-large recent-orders">
+                <div class="panel-header">
+                    <h2>Recent Orders</h2>
+                    <a class="button small outline" href="${pageContext.request.contextPath}/admin/orders">View All</a>
+                </div>
+                <ul class="order-list">
+                    <%
+                        List<Order> recentOrders = (List<Order>) request.getAttribute("recentOrders");
+                        if (recentOrders == null || recentOrders.isEmpty()) {
+                    %>
+                        <li><span class="order-meta">No orders yet.</span></li>
+                    <%
+                        } else {
+                            for (Order o : recentOrders) {
+                    %>
+                        <li>
+                            <div>
+                                <span class="order-title"><%= o.getCustomerName() == null ? "Customer" : o.getCustomerName() %></span>
+                                <span class="order-meta"><%= o.getOrderCode() %></span>
+                            </div>
+                            <div class="order-state">
+                                <span class="order-badge <%= badgeClass(o.getStatus()) %>"><%= label(o.getStatus()) %></span>
+                                <strong>Rs <%= String.format("%.0f", o.getTotal()) %></strong>
+                            </div>
+                        </li>
+                    <%
+                            }
+                        }
+                    %>
+                </ul>
+            </article>
+
+            <article class="dashboard-panel categories-panel">
+                <div class="panel-header">
+                    <h2>Items by Category</h2>
+                </div>
+                <ul class="category-list">
+                    <li>
+                        <span>Beverages & Extras</span>
+                        <div class="progress-bar"><span style="width: 60%"></span></div>
+                        <strong>3</strong>
+                    </li>
+                    <li>
+                        <span>Combo Box</span>
+                        <div class="progress-bar"><span style="width: 45%"></span></div>
+                        <strong>2</strong>
+                    </li>
+                    <li>
+                        <span>Crazy Doubles</span>
+                        <div class="progress-bar"><span style="width: 55%"></span></div>
+                        <strong>2</strong>
+                    </li>
+                    <li>
+                        <span>Desserts</span>
+                        <div class="progress-bar"><span style="width: 62%"></span></div>
+                        <strong>3</strong>
+                    </li>
+                    <li>
+                        <span>Pasta | Sandwich | Calzone</span>
+                        <div class="progress-bar"><span style="width: 50%"></span></div>
+                        <strong>3</strong>
+                    </li>
+                    <li>
+                        <span>Pizza Flavors</span>
+                        <div class="progress-bar"><span style="width: 58%"></span></div>
+                        <strong>3</strong>
+                    </li>
+                    <li>
+                        <span>Popular!</span>
+                        <div class="progress-bar"><span style="width: 75%"></span></div>
+                        <strong>4</strong>
+                    </li>
+                    <li>
+                        <span>Starters</span>
+                        <div class="progress-bar"><span style="width: 53%"></span></div>
+                        <strong>3</strong>
+                    </li>
+                </ul>
+            </article>
+
+            <article class="dashboard-panel popular-panel">
+                <div class="panel-header">
+                    <h2>Popular Items</h2>
+                    <a class="button small outline" href="#">Manage</a>
+                </div>
+                <ul class="popular-list">
+                    <li>
+                        <span>Supreme Pizza</span>
+                        <strong>24 orders</strong>
+                    </li>
+                    <li>
+                        <span>Cheesy Garlic Bread</span>
+                        <strong>19 orders</strong>
+                    </li>
+                    <li>
+                        <span>Spicy Chicken Wings</span>
+                        <strong>16 orders</strong>
+                    </li>
+                </ul>
+            </article>
+
+            <article class="dashboard-panel status-panel">
+                <div class="panel-header">
+                    <h2>Order Status</h2>
+                </div>
+                <div class="status-list">
+                    <div class="status-item">
+                        <span>Pending</span>
+                        <strong><%= num(request.getAttribute("pendingCount")) %></strong>
+                    </div>
+                    <div class="status-item">
+                        <span>Accepted</span>
+                        <strong><%= num(request.getAttribute("acceptedCount")) %></strong>
+                    </div>
+                    <div class="status-item">
+                        <span>Picked up</span>
+                        <strong><%= num(request.getAttribute("pickedUpCount")) %></strong>
+                    </div>
+                    <div class="status-item">
+                        <span>Delivered</span>
+                        <strong><%= num(request.getAttribute("deliveredCount")) %></strong>
+                    </div>
+                    <div class="status-item">
+                        <span>Rejected</span>
+                        <strong><%= num(request.getAttribute("rejectedCount")) %></strong>
+                    </div>
+                </div>
+            </article>
+        </section>
+    </main>
 </div>
 </body>
 </html>

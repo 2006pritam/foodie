@@ -1,10 +1,20 @@
 package com.foodie.web;
 
+import com.foodie.db.ItemDao;
+import com.foodie.db.OrderDao;
 import com.foodie.db.UserDao;
+import com.foodie.model.Item;
+import com.foodie.model.Order;
+import com.foodie.model.OrderItem;
 import com.foodie.model.User;
 
+import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -13,10 +23,12 @@ import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.servlet.ServletException;
+import javax.servlet.annotation.MultipartConfig;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
+import javax.servlet.http.Part;
 
 /**
  * Central front-controller for the Foodie web app.
@@ -27,6 +39,9 @@ import javax.servlet.http.HttpSession;
  *   GET/POST /forgot-password – password reset
  *   GET      /logout         – session invalidation
  */
+@MultipartConfig(fileSizeThreshold = 1024 * 1024,
+                 maxFileSize = 5_000_000,
+                 maxRequestSize = 20_000_000)
 public class FoodieServlet extends HttpServlet {
 
     private static final Logger LOGGER = Logger.getLogger(FoodieServlet.class.getName());
@@ -38,6 +53,8 @@ public class FoodieServlet extends HttpServlet {
     private static final String VIEW_FORGOT         = "/WEB-INF/views/forgot-password.jsp";
 
     private final UserDao userDao = new UserDao();
+    private final ItemDao itemDao = new ItemDao();
+    private final OrderDao orderDao = new OrderDao();
 
     // ---------------------------------------------------------------
     // GET
@@ -77,10 +94,48 @@ public class FoodieServlet extends HttpServlet {
                 showAdminUsers(req, res);
                 return;
 
+            case "/admin/items":
+                if (!ensureLoggedIn(req, res)) return;
+                if (!authorizeRole(req, res, "ADMIN")) return;
+                showAdminItems(req, res);
+                return;
+
+            case "/admin/orders":
+                if (!ensureLoggedIn(req, res)) return;
+                if (!authorizeRole(req, res, "ADMIN")) return;
+                showAdminOrders(req, res);
+                return;
+
             case "/rider/dashboard":
                 if (!ensureLoggedIn(req, res)) return;
                 if (!authorizeRole(req, res, "RIDER")) return;
                 showRiderDashboard(req, res);
+                return;
+
+            case "/rider/orders":
+                // Canonical rider view is the dashboard; keep this as a redirect target.
+                res.sendRedirect(req.getContextPath() + "/rider/dashboard");
+                return;
+
+            // Customer shopping flow
+            case "/menu":
+                if (!ensureLoggedIn(req, res)) return;
+                showMenu(req, res);
+                return;
+
+            case "/cart":
+                if (!ensureLoggedIn(req, res)) return;
+                showCart(req, res);
+                return;
+
+            case "/checkout":
+                if (!ensureLoggedIn(req, res)) return;
+                showCheckout(req, res);
+                return;
+
+            case "/orders":
+                if (!ensureLoggedIn(req, res)) return;
+                showUserOrders(req, res);
                 return;
 
             default:                 showHome(req, res, "");
@@ -102,6 +157,11 @@ public class FoodieServlet extends HttpServlet {
             case "/signup":          handleSignup(req, res);          return;
             case "/forgot-password": handleForgotPassword(req, res);  return;
             case "/admin/users":     handleAdminUsersPost(req, res);  return;
+            case "/admin/items":     handleAdminItemsPost(req, res);  return;
+            case "/admin/orders":    handleAdminOrdersPost(req, res); return;
+            case "/rider/orders":    handleRiderOrdersPost(req, res); return;
+            case "/cart":            handleCartPost(req, res);        return;
+            case "/checkout":        handleCheckoutPost(req, res);    return;
             default:                 handleReservation(req, res);
         }
     }
@@ -126,7 +186,7 @@ public class FoodieServlet extends HttpServlet {
             User user = userDao.findByEmail(email);
             if (user != null && password.equals(user.getPassword())) {
                 String normalizedRole = user.getRole() == null ? "USER" : user.getRole().trim().toUpperCase();
-                if ("admin@gmail.com".equalsIgnoreCase(normalise(email))) {
+                if ("admin@gmail.com".equalsIgnoreCase(email)) {
                     normalizedRole = "ADMIN";
                 }
                 HttpSession session = req.getSession(true);
@@ -372,6 +432,17 @@ public class FoodieServlet extends HttpServlet {
         forward(req, res, "/WEB-INF/views/admin/users.jsp");
     }
 
+    private void showAdminItems(HttpServletRequest req, HttpServletResponse res)
+            throws ServletException, IOException {
+        try {
+            req.setAttribute("items", itemDao.findAll());
+        } catch (SQLException e) {
+            LOGGER.log(Level.SEVERE, "Failed to load admin items", e);
+            req.setAttribute("adminItemMessage", msg("error", "Unable to load items. Please try again."));
+        }
+        forward(req, res, "/WEB-INF/views/admin/items.jsp");
+    }
+
     private void handleAdminUsersPost(HttpServletRequest req, HttpServletResponse res)
             throws ServletException, IOException {
         if (!authorizeRole(req, res, "ADMIN")) return;
@@ -398,6 +469,175 @@ public class FoodieServlet extends HttpServlet {
         }
         req.setAttribute("adminMessage", msg("success", message));
         showAdminUsers(req, res);
+    }
+
+    private void handleAdminItemsPost(HttpServletRequest req, HttpServletResponse res)
+            throws ServletException, IOException {
+        if (!authorizeRole(req, res, "ADMIN")) return;
+
+        String action = param(req, "action");
+        String message;
+        try {
+            switch (action) {
+                case "create":
+                    message = createAdminItem(req);
+                    break;
+                case "update":
+                    message = updateAdminItem(req);
+                    break;
+                case "delete":
+                    message = deleteAdminItem(req);
+                    break;
+                default:
+                    message = "Unknown item action.";
+            }
+        } catch (SQLException e) {
+            LOGGER.log(Level.SEVERE, "Admin item CRUD error", e);
+            message = "A server error occurred while updating items.";
+        }
+        req.setAttribute("adminItemMessage", msg("success", message));
+        showAdminItems(req, res);
+    }
+
+    private String createAdminItem(HttpServletRequest req) throws SQLException, IOException, ServletException {
+        String name = param(req, "name");
+        String category = param(req, "category");
+        String priceValue = param(req, "price");
+        String discountValue = param(req, "discount");
+
+        if (blank(name) || blank(category) || blank(priceValue)) {
+            return "Name, category and price are required.";
+        }
+
+        double price;
+        double discount = 0;
+        try {
+            price = Double.parseDouble(priceValue);
+            if (!blank(discountValue)) {
+                discount = Double.parseDouble(discountValue);
+            }
+        } catch (NumberFormatException e) {
+            return "Price and discount must be valid numbers.";
+        }
+
+        Part imagePart = req.getPart("image");
+        if (imagePart == null || getSubmittedFileName(imagePart).isBlank()) {
+            return "Please upload an image for the item.";
+        }
+        String imagePath;
+        try {
+            imagePath = saveUploadedFile(imagePart, req);
+        } catch (IOException e) {
+            LOGGER.log(Level.WARNING, "Failed to save uploaded item image", e);
+            return "Could not save uploaded image.";
+        }
+
+        boolean created = itemDao.createItem(name, category, price, discount, imagePath);
+        return created ? "Item added successfully." : "Could not add item.";
+    }
+
+    private String updateAdminItem(HttpServletRequest req) throws SQLException, IOException, ServletException {
+        String idValue = param(req, "id");
+        String name = param(req, "name");
+        String category = param(req, "category");
+        String priceValue = param(req, "price");
+        String discountValue = param(req, "discount");
+        String existingImagePath = param(req, "existingImagePath");
+
+        if (blank(idValue) || blank(name) || blank(category) || blank(priceValue)) {
+            return "ID, name, category and price are required.";
+        }
+
+        int id;
+        double price;
+        double discount = 0;
+        try {
+            id = Integer.parseInt(idValue);
+            price = Double.parseDouble(priceValue);
+            if (!blank(discountValue)) {
+                discount = Double.parseDouble(discountValue);
+            }
+        } catch (NumberFormatException e) {
+            return "Invalid item ID, price, or discount.";
+        }
+
+        String imagePath = existingImagePath;
+        Part imagePart = req.getPart("image");
+        if (imagePart != null && !getSubmittedFileName(imagePart).isBlank()) {
+            try {
+                imagePath = saveUploadedFile(imagePart, req);
+            } catch (IOException e) {
+                LOGGER.log(Level.WARNING, "Failed to save uploaded item image", e);
+                return "Could not save uploaded image.";
+            }
+        }
+
+        boolean updated = itemDao.updateItem(id, name, category, price, discount, imagePath);
+        return updated ? "Item updated successfully." : "Could not update item.";
+    }
+
+    private String deleteAdminItem(HttpServletRequest req) throws SQLException {
+        String idValue = param(req, "id");
+        if (blank(idValue)) {
+            return "Item ID is required to delete an item.";
+        }
+        int id;
+        try {
+            id = Integer.parseInt(idValue);
+        } catch (NumberFormatException e) {
+            return "Invalid item ID.";
+        }
+        boolean deleted = itemDao.deleteById(id);
+        return deleted ? "Item deleted successfully." : "Could not delete item.";
+    }
+
+    private String saveUploadedFile(Part part, HttpServletRequest req) throws IOException {
+        String filename = getSubmittedFileName(part);
+        if (filename == null || filename.isBlank()) {
+            throw new IOException("No file name present.");
+        }
+
+        String extension = "";
+        int dot = filename.lastIndexOf('.');
+        if (dot >= 0) {
+            extension = filename.substring(dot);
+        }
+
+        String savedName = System.currentTimeMillis() + "_" + Math.abs(filename.hashCode()) + extension;
+        String relativeDir = "assets/images/items";
+        String uploadPath = req.getServletContext().getRealPath(relativeDir);
+        if (uploadPath == null) {
+            throw new IOException("Unable to resolve upload directory.");
+        }
+
+        File uploadDir = new File(uploadPath);
+        if (!uploadDir.exists() && !uploadDir.mkdirs()) {
+            throw new IOException("Failed to create image upload directory.");
+        }
+
+        Path target = uploadDir.toPath().resolve(savedName);
+        try (InputStream in = part.getInputStream()) {
+            Files.copy(in, target, StandardCopyOption.REPLACE_EXISTING);
+        }
+
+        return relativeDir + "/" + savedName;
+    }
+
+    private String getSubmittedFileName(Part part) {
+        if (part == null) {
+            return null;
+        }
+        String header = part.getHeader("content-disposition");
+        if (header == null) {
+            return null;
+        }
+        for (String segment : header.split(";")) {
+            if (segment.trim().startsWith("filename=")) {
+                String filename = segment.substring(segment.indexOf('=') + 1).trim().replace("\"", "");
+                return filename.substring(filename.lastIndexOf(File.separator) + 1);
+            }
+        }
+        return null;
     }
 
     private String createAdminUser(HttpServletRequest req) throws SQLException {
@@ -508,12 +748,307 @@ public class FoodieServlet extends HttpServlet {
 
     private void showAdminDashboard(HttpServletRequest req, HttpServletResponse res)
             throws ServletException, IOException {
+        try {
+            List<Order> all = orderDao.findAll();
+            req.setAttribute("totalItems",     itemDao.countAll());
+            req.setAttribute("totalOrders",    all.size());
+            req.setAttribute("pendingCount",   orderDao.countByStatus(OrderDao.PENDING));
+            req.setAttribute("acceptedCount",  orderDao.countByStatus(OrderDao.ACCEPTED));
+            req.setAttribute("pickedUpCount",  orderDao.countByStatus(OrderDao.PICKED_UP));
+            req.setAttribute("deliveredCount", orderDao.countByStatus(OrderDao.DELIVERED));
+            req.setAttribute("rejectedCount",  orderDao.countByStatus(OrderDao.REJECTED));
+            req.setAttribute("recentOrders",   all.subList(0, Math.min(5, all.size())));
+        } catch (SQLException e) {
+            LOGGER.log(Level.SEVERE, "Failed to load admin dashboard metrics", e);
+        }
         forward(req, res, "/WEB-INF/views/admin/dashboard.jsp");
     }
 
     private void showRiderDashboard(HttpServletRequest req, HttpServletResponse res)
             throws ServletException, IOException {
+        HttpSession session = req.getSession(false);
+        int riderId = intAttr(session, "userId");
+        try {
+            req.setAttribute("availableOrders", orderDao.findAvailableForRider());
+            req.setAttribute("myOrders",        orderDao.findByRiderId(riderId));
+        } catch (SQLException e) {
+            LOGGER.log(Level.SEVERE, "Failed to load rider orders", e);
+            req.setAttribute("riderMessage", msg("error", "Unable to load orders. Please try again."));
+        }
         forward(req, res, "/WEB-INF/views/rider/dashboard.jsp");
+    }
+
+    // ---------------------------------------------------------------
+    // Admin orders
+    // ---------------------------------------------------------------
+
+    private void showAdminOrders(HttpServletRequest req, HttpServletResponse res)
+            throws ServletException, IOException {
+        try {
+            req.setAttribute("orders", orderDao.findAll());
+        } catch (SQLException e) {
+            LOGGER.log(Level.SEVERE, "Failed to load admin orders", e);
+            req.setAttribute("adminOrderMessage", msg("error", "Unable to load orders. Please try again."));
+        }
+        forward(req, res, "/WEB-INF/views/admin/orders.jsp");
+    }
+
+    private void handleAdminOrdersPost(HttpServletRequest req, HttpServletResponse res)
+            throws ServletException, IOException {
+        if (!authorizeRole(req, res, "ADMIN")) return;
+
+        String action = param(req, "action");
+        int id = parseIntSafe(param(req, "id"), -1);
+        try {
+            if (id > 0 && "accept".equals(action)) {
+                orderDao.updateStatus(id, OrderDao.ACCEPTED);
+            } else if (id > 0 && "reject".equals(action)) {
+                orderDao.updateStatus(id, OrderDao.REJECTED);
+            }
+        } catch (SQLException e) {
+            LOGGER.log(Level.SEVERE, "Admin order status update error", e);
+        }
+        res.sendRedirect(req.getContextPath() + "/admin/orders");
+    }
+
+    // ---------------------------------------------------------------
+    // Rider orders
+    // ---------------------------------------------------------------
+
+    private void handleRiderOrdersPost(HttpServletRequest req, HttpServletResponse res)
+            throws ServletException, IOException {
+        if (!authorizeRole(req, res, "RIDER")) return;
+
+        HttpSession session = req.getSession(false);
+        int riderId = intAttr(session, "userId");
+        String riderName = session == null ? "Rider" : String.valueOf(session.getAttribute("userName"));
+        String action = param(req, "action");
+        int id = parseIntSafe(param(req, "id"), -1);
+        try {
+            if (id > 0 && "pickup".equals(action)) {
+                orderDao.claimOrder(id, riderId, riderName);
+            } else if (id > 0 && "deliver".equals(action)) {
+                orderDao.markDelivered(id, riderId);
+            }
+        } catch (SQLException e) {
+            LOGGER.log(Level.SEVERE, "Rider order action error", e);
+        }
+        res.sendRedirect(req.getContextPath() + "/rider/dashboard");
+    }
+
+    // ---------------------------------------------------------------
+    // Customer shopping flow (menu / cart / checkout / orders)
+    // ---------------------------------------------------------------
+
+    private void showMenu(HttpServletRequest req, HttpServletResponse res)
+            throws ServletException, IOException {
+        try {
+            req.setAttribute("items", itemDao.findAll());
+        } catch (SQLException e) {
+            LOGGER.log(Level.SEVERE, "Failed to load menu", e);
+            req.setAttribute("menuMessage", msg("error", "Unable to load the menu. Please try again."));
+        }
+        req.setAttribute("cartCount", cartCount(getCart(req.getSession(true))));
+        forward(req, res, "/WEB-INF/views/menu.jsp");
+    }
+
+    private void showCart(HttpServletRequest req, HttpServletResponse res)
+            throws ServletException, IOException {
+        populateCartAttributes(req);
+        forward(req, res, "/WEB-INF/views/cart.jsp");
+    }
+
+    private void showCheckout(HttpServletRequest req, HttpServletResponse res)
+            throws ServletException, IOException {
+        List<OrderItem> lines = populateCartAttributes(req);
+        if (lines.isEmpty()) {
+            res.sendRedirect(req.getContextPath() + "/menu");
+            return;
+        }
+        forward(req, res, "/WEB-INF/views/checkout.jsp");
+    }
+
+    private void showUserOrders(HttpServletRequest req, HttpServletResponse res)
+            throws ServletException, IOException {
+        int userId = intAttr(req.getSession(false), "userId");
+        try {
+            req.setAttribute("orders", orderDao.findByUserId(userId));
+        } catch (SQLException e) {
+            LOGGER.log(Level.SEVERE, "Failed to load user orders", e);
+            req.setAttribute("orderMessage", msg("error", "Unable to load your orders. Please try again."));
+        }
+        forward(req, res, "/WEB-INF/views/orders.jsp");
+    }
+
+    private void handleCartPost(HttpServletRequest req, HttpServletResponse res)
+            throws ServletException, IOException {
+        if (!ensureLoggedIn(req, res)) return;
+
+        Map<Integer, Integer> cart = getCart(req.getSession(true));
+        String action = param(req, "action");
+        int itemId = parseIntSafe(param(req, "itemId"), -1);
+        int qty    = parseIntSafe(param(req, "quantity"), 1);
+
+        switch (action) {
+            case "add":
+                if (itemId > 0) {
+                    if (qty < 1) qty = 1;
+                    cart.merge(itemId, qty, Integer::sum);
+                }
+                break;
+            case "update":
+                if (itemId > 0) {
+                    if (qty <= 0) cart.remove(itemId);
+                    else cart.put(itemId, qty);
+                }
+                break;
+            case "remove":
+                if (itemId > 0) cart.remove(itemId);
+                break;
+            case "clear":
+                cart.clear();
+                break;
+            default:
+                break;
+        }
+        res.sendRedirect(req.getContextPath() + "/cart");
+    }
+
+    private void handleCheckoutPost(HttpServletRequest req, HttpServletResponse res)
+            throws ServletException, IOException {
+        if (!ensureLoggedIn(req, res)) return;
+
+        HttpSession session = req.getSession(true);
+        Map<Integer, Integer> cart = getCart(session);
+        if (cart.isEmpty()) {
+            res.sendRedirect(req.getContextPath() + "/menu");
+            return;
+        }
+
+        String address = param(req, "address");
+        String phone   = param(req, "phone");
+        String payment = param(req, "payment_method");
+
+        if (blank(address) || blank(phone) || blank(payment)) {
+            req.setAttribute("checkoutMessage", msg("error", "Address, phone and payment method are required."));
+            showCheckout(req, res);
+            return;
+        }
+
+        try {
+            // Re-price every line from the database — never trust cart-side prices.
+            List<OrderItem> lines = buildCartLines(cart);
+            if (lines.isEmpty()) {
+                cart.clear();
+                res.sendRedirect(req.getContextPath() + "/menu");
+                return;
+            }
+
+            double total = 0;
+            for (OrderItem line : lines) total += line.getLineTotal();
+
+            Order order = new Order();
+            order.setOrderCode("ORD" + System.currentTimeMillis());
+            order.setUserId(intAttr(session, "userId"));
+            order.setCustomerName(String.valueOf(session.getAttribute("userName")));
+            order.setTenantId(intAttr(session, "tenantId") > 0 ? intAttr(session, "tenantId") : 1);
+            order.setAddress(address);
+            order.setPhone(phone);
+            order.setPaymentMethod(payment);
+            order.setTotal(round2(total));
+            // Mock payment always succeeds.
+
+            int newId = orderDao.createOrder(order, lines);
+            if (newId > 0) {
+                cart.clear();
+                res.sendRedirect(req.getContextPath() + "/orders");
+            } else {
+                req.setAttribute("checkoutMessage", msg("error", "Could not place your order. Please try again."));
+                showCheckout(req, res);
+            }
+        } catch (SQLException e) {
+            LOGGER.log(Level.SEVERE, "Checkout error", e);
+            req.setAttribute("checkoutMessage", msg("error", "A server error occurred while placing your order."));
+            showCheckout(req, res);
+        }
+    }
+
+    // ---------------------------------------------------------------
+    // Cart helpers
+    // ---------------------------------------------------------------
+
+    @SuppressWarnings("unchecked")
+    private Map<Integer, Integer> getCart(HttpSession session) {
+        Object c = session.getAttribute("cart");
+        if (c instanceof Map) {
+            return (Map<Integer, Integer>) c;
+        }
+        Map<Integer, Integer> cart = new LinkedHashMap<>();
+        session.setAttribute("cart", cart);
+        return cart;
+    }
+
+    private int cartCount(Map<Integer, Integer> cart) {
+        int total = 0;
+        for (int q : cart.values()) total += q;
+        return total;
+    }
+
+    /** Join cart entries to live item rows and compute discounted line prices. */
+    private List<OrderItem> buildCartLines(Map<Integer, Integer> cart) throws SQLException {
+        List<OrderItem> lines = new ArrayList<>();
+        for (Map.Entry<Integer, Integer> e : cart.entrySet()) {
+            int qty = e.getValue();
+            if (qty <= 0) continue;
+            Item item = itemDao.findById(e.getKey());
+            if (item == null) continue;
+            lines.add(new OrderItem(item.getId(), item.getName(),
+                                    round2(discountedPrice(item)), qty));
+        }
+        return lines;
+    }
+
+    /** Build cart line/total request attributes for the cart & checkout views. */
+    private List<OrderItem> populateCartAttributes(HttpServletRequest req)
+            throws ServletException, IOException {
+        Map<Integer, Integer> cart = getCart(req.getSession(true));
+        List<OrderItem> lines = new ArrayList<>();
+        double total = 0;
+        try {
+            lines = buildCartLines(cart);
+            for (OrderItem line : lines) total += line.getLineTotal();
+        } catch (SQLException e) {
+            LOGGER.log(Level.SEVERE, "Failed to build cart", e);
+            req.setAttribute("cartMessage", msg("error", "Unable to load your cart. Please try again."));
+        }
+        req.setAttribute("cartLines", lines);
+        req.setAttribute("cartTotal", round2(total));
+        req.setAttribute("cartCount", cartCount(cart));
+        return lines;
+    }
+
+    private static double discountedPrice(Item item) {
+        double p = item.getPrice() * (1 - item.getDiscount() / 100.0);
+        return p < 0 ? 0 : p;
+    }
+
+    private static double round2(double v) {
+        return Math.round(v * 100.0) / 100.0;
+    }
+
+    private static int intAttr(HttpSession session, String name) {
+        if (session == null) return 0;
+        Object v = session.getAttribute(name);
+        if (v instanceof Number) return ((Number) v).intValue();
+        return parseIntSafe(v == null ? "" : String.valueOf(v), 0);
+    }
+
+    private static int parseIntSafe(String v, int fallback) {
+        try {
+            return Integer.parseInt(v.trim());
+        } catch (NumberFormatException | NullPointerException e) {
+            return fallback;
+        }
     }
 
     private boolean ensureLoggedIn(HttpServletRequest req, HttpServletResponse res) throws IOException {

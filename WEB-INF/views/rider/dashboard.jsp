@@ -1,47 +1,134 @@
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
+<%@ page import="java.util.List" %>
+<%@ page import="com.foodie.model.Order" %>
+<%@ page import="com.foodie.model.OrderItem" %>
+<%!
+    String badgeClass(String status) { return status == null ? "pending" : status.toLowerCase(); }
+    String label(String status) {
+        if (status == null) return "Pending";
+        if ("PICKED_UP".equals(status)) return "Picked up";
+        return status.charAt(0) + status.substring(1).toLowerCase();
+    }
+%>
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Rider Dashboard | Foodie</title>
-    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/style.css">
+    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/style.css?v=2">
 </head>
 <body class="dashboard-page rider-dashboard">
+<%
+    String riderName = (String) session.getAttribute("userName");
+    List<Order> availableOrders = (List<Order>) request.getAttribute("availableOrders");
+    List<Order> myOrders = (List<Order>) request.getAttribute("myOrders");
+    String ctx = request.getContextPath();
+%>
 <div class="dashboard-shell">
     <header class="dashboard-header">
         <div class="dashboard-brand">
             <h1>Rider Console</h1>
-            <p>Track deliveries, manage pickup tasks, and stay synced with the restaurant.</p>
+            <p>Welcome, <%= riderName == null ? "Rider" : riderName %>. Pick up accepted orders and confirm deliveries.</p>
         </div>
         <div class="dashboard-actions">
-            <a class="button outline" href="${pageContext.request.contextPath}/dashboard">Home</a>
-            <a class="button danger" href="${pageContext.request.contextPath}/logout">Logout</a>
+            <a class="button outline" href="<%= ctx %>/dashboard">Home</a>
+            <a class="button danger" href="<%= ctx %>/logout">Logout</a>
         </div>
     </header>
 
-    <section class="dashboard-grid">
-        <article class="dashboard-panel large">
-            <h2>Delivery overview</h2>
-            <p>Access your assigned tasks and active orders from the rider dashboard.</p>
-            <div class="feature-card">
-                <span class="badge accent">Live</span>
-                <p>New orders will appear here in real time when the system is connected.</p>
-            </div>
-        </article>
+    <div class="panel-message">
+        <%= request.getAttribute("riderMessage") != null ? request.getAttribute("riderMessage") : "" %>
+    </div>
 
-        <article class="dashboard-panel small">
-            <h3>Today's tasks</h3>
-            <ul class="dashboard-list">
-                <li>View restaurant pickup details</li>
-                <li>Confirm order collection</li>
-                <li>Update delivery status</li>
-            </ul>
-        </article>
+    <section class="panel">
+        <div class="panel-header">
+            <h2>Available for pickup</h2>
+            <p>Accepted orders waiting for a rider. Claim one to start delivering.</p>
+        </div>
+        <table class="data-table">
+            <thead>
+            <tr><th>Code</th><th>Customer</th><th>Items</th><th>Total</th><th>Address</th><th>Action</th></tr>
+            </thead>
+            <tbody>
+            <%
+                if (availableOrders == null || availableOrders.isEmpty()) {
+            %>
+                <tr><td colspan="6" class="empty-state">No orders are waiting for pickup right now.</td></tr>
+            <%
+                } else {
+                    for (Order o : availableOrders) {
+            %>
+                <tr>
+                    <td><%= o.getOrderCode() %></td>
+                    <td><%= o.getCustomerName() == null ? "" : o.getCustomerName() %></td>
+                    <td>
+                        <ul class="mini-item-list">
+                            <% for (OrderItem line : o.getItems()) { %>
+                                <li><%= line.getItemName() %> &times; <%= line.getQuantity() %></li>
+                            <% } %>
+                        </ul>
+                    </td>
+                    <td>Rs <%= String.format("%.2f", o.getTotal()) %></td>
+                    <td><%= o.getAddress() == null ? "" : o.getAddress() %><br><small><%= o.getPhone() == null ? "" : o.getPhone() %></small></td>
+                    <td>
+                        <form class="inline-form" method="post" action="<%= ctx %>/rider/orders">
+                            <input type="hidden" name="action" value="pickup" />
+                            <input type="hidden" name="id" value="<%= o.getId() %>" />
+                            <button type="submit" class="button small">Pick Up</button>
+                        </form>
+                    </td>
+                </tr>
+            <%
+                    }
+                }
+            %>
+            </tbody>
+        </table>
+    </section>
 
-        <article class="dashboard-panel small">
-            <h3>Support</h3>
-            <p>Need help? Contact the admin for rider assignments and account updates.</p>
-        </article>
+    <section class="panel">
+        <div class="panel-header">
+            <h2>My deliveries</h2>
+            <p>Orders you have picked up. Confirm delivery once handed over.</p>
+        </div>
+        <table class="data-table">
+            <thead>
+            <tr><th>Code</th><th>Customer</th><th>Address</th><th>Total</th><th>Status</th><th>Action</th></tr>
+            </thead>
+            <tbody>
+            <%
+                if (myOrders == null || myOrders.isEmpty()) {
+            %>
+                <tr><td colspan="6" class="empty-state">You have no active deliveries.</td></tr>
+            <%
+                } else {
+                    for (Order o : myOrders) {
+            %>
+                <tr>
+                    <td><%= o.getOrderCode() %></td>
+                    <td><%= o.getCustomerName() == null ? "" : o.getCustomerName() %></td>
+                    <td><%= o.getAddress() == null ? "" : o.getAddress() %><br><small><%= o.getPhone() == null ? "" : o.getPhone() %></small></td>
+                    <td>Rs <%= String.format("%.2f", o.getTotal()) %></td>
+                    <td><span class="order-badge <%= badgeClass(o.getStatus()) %>"><%= label(o.getStatus()) %></span></td>
+                    <td>
+                        <% if ("PICKED_UP".equals(o.getStatus())) { %>
+                            <form class="inline-form" method="post" action="<%= ctx %>/rider/orders" onsubmit="return confirm('Confirm this order as delivered?');">
+                                <input type="hidden" name="action" value="deliver" />
+                                <input type="hidden" name="id" value="<%= o.getId() %>" />
+                                <button type="submit" class="button small">Mark Delivered</button>
+                            </form>
+                        <% } else { %>
+                            <span class="muted">Delivered</span>
+                        <% } %>
+                    </td>
+                </tr>
+            <%
+                    }
+                }
+            %>
+            </tbody>
+        </table>
     </section>
 </div>
 </body>

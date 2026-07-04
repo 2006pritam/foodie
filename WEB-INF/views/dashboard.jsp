@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Your Dashboard - Foodie</title>
-  <link rel="stylesheet" href="./assets/css/style.css">
+  <link rel="stylesheet" href="./assets/css/style.css?v=2">
 </head>
 <body class="dashboard-page">
 <%
@@ -24,7 +24,9 @@
       <% } else if ("RIDER".equalsIgnoreCase(role)) { %>
         <a class="button outline" href="rider/dashboard">Rider Panel</a>
       <% } else { %>
-        <a class="button outline" href="home">Browse Offers</a>
+        <a class="button outline" href="menu">Browse Menu</a>
+        <a class="button outline" href="cart">My Cart</a>
+        <a class="button outline" href="orders">My Orders</a>
       <% } %>
       <a class="button danger" href="logout">Sign Out</a>
     </div>
@@ -48,8 +50,8 @@
           <li>Open the Rider panel for delivery tasks.</li>
           <li>Check current order assignments.</li>
         <% } else { %>
-          <li>Browse restaurant offerings.</li>
-          <li>Return to the homepage for reservations.</li>
+          <li><a href="menu">Browse the menu</a> and add items to your cart.</li>
+          <li><a href="orders">Track your orders</a> from placed to delivered.</li>
         <% } %>
       </ul>
     </article>

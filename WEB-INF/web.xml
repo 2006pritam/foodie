@@ -34,7 +34,42 @@
 
   <servlet-mapping>
     <servlet-name>FoodieServlet</servlet-name>
+    <url-pattern>/admin/items</url-pattern>
+  </servlet-mapping>
+
+  <servlet-mapping>
+    <servlet-name>FoodieServlet</servlet-name>
+    <url-pattern>/admin/orders</url-pattern>
+  </servlet-mapping>
+
+  <servlet-mapping>
+    <servlet-name>FoodieServlet</servlet-name>
     <url-pattern>/rider/dashboard</url-pattern>
+  </servlet-mapping>
+
+  <servlet-mapping>
+    <servlet-name>FoodieServlet</servlet-name>
+    <url-pattern>/rider/orders</url-pattern>
+  </servlet-mapping>
+
+  <servlet-mapping>
+    <servlet-name>FoodieServlet</servlet-name>
+    <url-pattern>/menu</url-pattern>
+  </servlet-mapping>
+
+  <servlet-mapping>
+    <servlet-name>FoodieServlet</servlet-name>
+    <url-pattern>/cart</url-pattern>
+  </servlet-mapping>
+
+  <servlet-mapping>
+    <servlet-name>FoodieServlet</servlet-name>
+    <url-pattern>/checkout</url-pattern>
+  </servlet-mapping>
+
+  <servlet-mapping>
+    <servlet-name>FoodieServlet</servlet-name>
+    <url-pattern>/orders</url-pattern>
   </servlet-mapping>
 
   <servlet-mapping>
