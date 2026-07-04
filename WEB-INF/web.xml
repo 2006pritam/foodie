@@ -74,6 +74,11 @@
 
   <servlet-mapping>
     <servlet-name>FoodieServlet</servlet-name>
+    <url-pattern>/chat</url-pattern>
+  </servlet-mapping>
+
+  <servlet-mapping>
+    <servlet-name>FoodieServlet</servlet-name>
     <url-pattern>/login</url-pattern>
   </servlet-mapping>
 

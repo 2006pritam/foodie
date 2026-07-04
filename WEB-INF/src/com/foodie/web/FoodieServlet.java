@@ -1,5 +1,6 @@
 package com.foodie.web;
 
+import com.foodie.chat.ChatService;
 import com.foodie.db.ItemDao;
 import com.foodie.db.OrderDao;
 import com.foodie.db.UserDao;
@@ -162,8 +163,30 @@ public class FoodieServlet extends HttpServlet {
             case "/rider/orders":    handleRiderOrdersPost(req, res); return;
             case "/cart":            handleCartPost(req, res);        return;
             case "/checkout":        handleCheckoutPost(req, res);    return;
+            case "/chat":            handleChat(req, res);            return;
             default:                 handleReservation(req, res);
         }
+    }
+
+    /**
+     * POST /chat – customer support chatbot. Accepts a "message" parameter,
+     * relays it to NVIDIA server-side via {@link ChatService}, and returns a
+     * small JSON payload {"reply":"..."}. Login is required.
+     */
+    private void handleChat(HttpServletRequest req, HttpServletResponse res)
+            throws IOException {
+        res.setContentType("application/json;charset=UTF-8");
+
+        HttpSession session = req.getSession(false);
+        if (session == null || session.getAttribute("userId") == null) {
+            res.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+            res.getWriter().write("{\"reply\":\"Please sign in to use chat support.\"}");
+            return;
+        }
+
+        String message = param(req, "message");
+        String reply = ChatService.getInstance().reply(message);
+        res.getWriter().write("{\"reply\":\"" + ChatService.jsonEscape(reply) + "\"}");
     }
 
     // ---------------------------------------------------------------
@@ -520,16 +543,26 @@ public class FoodieServlet extends HttpServlet {
             return "Price and discount must be valid numbers.";
         }
 
-        Part imagePart = req.getPart("image");
-        if (imagePart == null || getSubmittedFileName(imagePart).isBlank()) {
-            return "Please upload an image for the item.";
-        }
+        // Prefer a pasted web image URL (fetched directly by the browser); otherwise
+        // fall back to an uploaded file. One of the two is required.
+        String imageUrl = param(req, "imageUrl");
         String imagePath;
-        try {
-            imagePath = saveUploadedFile(imagePart, req);
-        } catch (IOException e) {
-            LOGGER.log(Level.WARNING, "Failed to save uploaded item image", e);
-            return "Could not save uploaded image.";
+        if (!blank(imageUrl)) {
+            if (!isValidImageUrl(imageUrl)) {
+                return "Image URL must start with http:// or https://";
+            }
+            imagePath = imageUrl;
+        } else {
+            Part imagePart = req.getPart("image");
+            if (imagePart == null || getSubmittedFileName(imagePart).isBlank()) {
+                return "Please provide an image URL or upload an image for the item.";
+            }
+            try {
+                imagePath = saveUploadedFile(imagePart, req);
+            } catch (IOException e) {
+                LOGGER.log(Level.WARNING, "Failed to save uploaded item image", e);
+                return "Could not save uploaded image.";
+            }
         }
 
         boolean created = itemDao.createItem(name, category, price, discount, imagePath);
@@ -561,14 +594,23 @@ public class FoodieServlet extends HttpServlet {
             return "Invalid item ID, price, or discount.";
         }
 
+        // A new web image URL wins; else a newly uploaded file; else keep the existing path.
         String imagePath = existingImagePath;
-        Part imagePart = req.getPart("image");
-        if (imagePart != null && !getSubmittedFileName(imagePart).isBlank()) {
-            try {
-                imagePath = saveUploadedFile(imagePart, req);
-            } catch (IOException e) {
-                LOGGER.log(Level.WARNING, "Failed to save uploaded item image", e);
-                return "Could not save uploaded image.";
+        String imageUrl = param(req, "imageUrl");
+        if (!blank(imageUrl)) {
+            if (!isValidImageUrl(imageUrl)) {
+                return "Image URL must start with http:// or https://";
+            }
+            imagePath = imageUrl;
+        } else {
+            Part imagePart = req.getPart("image");
+            if (imagePart != null && !getSubmittedFileName(imagePart).isBlank()) {
+                try {
+                    imagePath = saveUploadedFile(imagePart, req);
+                } catch (IOException e) {
+                    LOGGER.log(Level.WARNING, "Failed to save uploaded item image", e);
+                    return "Could not save uploaded image.";
+                }
             }
         }
 
@@ -961,7 +1003,9 @@ public class FoodieServlet extends HttpServlet {
             int newId = orderDao.createOrder(order, lines);
             if (newId > 0) {
                 cart.clear();
-                res.sendRedirect(req.getContextPath() + "/orders");
+                // Land on My Orders with this order's receipt auto-opened for easy printout.
+                String placed = java.net.URLEncoder.encode(order.getOrderCode(), StandardCharsets.UTF_8);
+                res.sendRedirect(req.getContextPath() + "/orders?placed=" + placed);
             } else {
                 req.setAttribute("checkoutMessage", msg("error", "Could not place your order. Please try again."));
                 showCheckout(req, res);
@@ -1082,6 +1126,13 @@ public class FoodieServlet extends HttpServlet {
 
     private static boolean blank(String v) {
         return v == null || v.trim().isEmpty();
+    }
+
+    /** True when the string looks like a usable absolute web image URL. */
+    private static boolean isValidImageUrl(String url) {
+        if (url == null) return false;
+        String u = url.trim().toLowerCase();
+        return u.startsWith("http://") || u.startsWith("https://");
     }
 
     private static String escape(String v) {

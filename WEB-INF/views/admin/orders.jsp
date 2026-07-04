@@ -15,7 +15,8 @@
 <head>
     <meta charset="UTF-8">
     <title>Manage Orders | Foodie Admin</title>
-    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/style.css?v=2">
+    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/style.css?v=5">
+    <script src="${pageContext.request.contextPath}/assets/js/theme.js"></script>
 </head>
 <body class="dashboard-page admin-orders-page">
 <div class="dashboard-shell">
@@ -27,6 +28,7 @@
         <div class="dashboard-actions">
             <a class="button outline" href="${pageContext.request.contextPath}/admin/dashboard">Back</a>
             <a class="button danger" href="${pageContext.request.contextPath}/logout">Logout</a>
+            <button type="button" class="theme-toggle" data-theme-toggle aria-label="Toggle theme"><span data-theme-glyph>&#9790;</span></button>
         </div>
     </header>
 

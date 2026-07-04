@@ -15,9 +15,10 @@
   <!-- 
     - custom css link
   -->
-  <link rel="stylesheet" href="./assets/css/style.css?v=2">
+  <link rel="stylesheet" href="./assets/css/style.css?v=5">
+  <script src="./assets/js/theme.js"></script>
 
-  <!-- 
+  <!--
     - google font link
   -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -90,6 +91,8 @@
         <% } else { %>
           <a href="login" class="btn btn-hover auth-header-btn">Login / Sign Up</a>
         <% } %>
+
+        <button type="button" class="theme-toggle" data-theme-toggle aria-label="Toggle theme"><span data-theme-glyph>&#9790;</span></button>
 
         <button class="nav-toggle-btn" aria-label="Toggle Menu" data-menu-toggle-btn>
           <span class="line top"></span>

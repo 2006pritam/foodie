@@ -6,7 +6,8 @@
 <head>
     <meta charset="UTF-8">
     <title>Manage Items | Foodie Admin</title>
-    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/style.css?v=2">
+    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/style.css?v=5">
+    <script src="${pageContext.request.contextPath}/assets/js/theme.js"></script>
 </head>
 <body class="dashboard-page admin-items-page">
 <div class="dashboard-shell">
@@ -18,6 +19,7 @@
         <div class="dashboard-actions">
             <a class="button outline" href="${pageContext.request.contextPath}/admin/dashboard">Back</a>
             <a class="button danger" href="${pageContext.request.contextPath}/logout">Logout</a>
+            <button type="button" class="theme-toggle" data-theme-toggle aria-label="Toggle theme"><span data-theme-glyph>&#9790;</span></button>
         </div>
     </header>
 
@@ -45,9 +47,16 @@
                     for (Item item : items) {
             %>
                 <tr>
+                    <%
+                        String rawImg = item.getImagePath();
+                        boolean hasImg = rawImg != null && !rawImg.isEmpty();
+                        boolean remoteImg = hasImg && (rawImg.startsWith("http://") || rawImg.startsWith("https://"));
+                        String thumbSrc = remoteImg ? rawImg
+                                : request.getContextPath() + "/" + (hasImg ? rawImg : "assets/images/food-menu-1.png");
+                    %>
                     <td><%= item.getId() %></td>
                     <td>
-                        <img class="item-thumb" src="<%= request.getContextPath() + "/" + (item.getImagePath() == null || item.getImagePath().isEmpty() ? "assets/images/food-menu-1.png" : item.getImagePath()) %>" alt="Item image" />
+                        <img class="item-thumb" src="<%= thumbSrc %>" alt="Item image" />
                     </td>
                     <td><%= item.getName() %></td>
                     <td><%= item.getCategory() %></td>
@@ -63,6 +72,7 @@
                                 <input type="text" name="category" value="<%= item.getCategory() %>" required />
                                 <input type="number" step="0.01" name="price" value="<%= item.getPrice() %>" required />
                                 <input type="number" step="0.01" name="discount" value="<%= item.getDiscount() %>" />
+                                <input type="url" name="imageUrl" placeholder="Paste image URL (optional)" value="<%= remoteImg ? rawImg : "" %>" />
                                 <input type="file" name="image" accept="image/*" />
                                 <button type="submit" class="button small">Save</button>
                             </div>
@@ -106,8 +116,13 @@
                 <input type="number" step="0.01" name="discount" value="0" />
             </div>
             <div class="form-row">
-                <label>Picture</label>
-                <input type="file" name="image" accept="image/*" required />
+                <label>Image URL</label>
+                <input type="url" name="imageUrl" placeholder="https://example.com/photo.jpg" />
+                <small class="hint">Paste a web image link to fetch it directly, or upload a file below.</small>
+            </div>
+            <div class="form-row">
+                <label>Or upload picture</label>
+                <input type="file" name="image" accept="image/*" />
             </div>
             <button type="submit" class="button">Add item</button>
         </form>

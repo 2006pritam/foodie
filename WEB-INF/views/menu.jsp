@@ -7,7 +7,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Menu | Foodie</title>
-    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/style.css?v=2">
+    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/style.css?v=5">
+    <script src="${pageContext.request.contextPath}/assets/js/theme.js"></script>
 </head>
 <body class="dashboard-page menu-page">
 <div class="dashboard-shell">
@@ -20,6 +21,7 @@
             <a class="button outline" href="${pageContext.request.contextPath}/cart">Cart (<%= request.getAttribute("cartCount") != null ? request.getAttribute("cartCount") : 0 %>)</a>
             <a class="button outline" href="${pageContext.request.contextPath}/orders">My Orders</a>
             <a class="button" href="${pageContext.request.contextPath}/dashboard">Dashboard</a>
+            <button type="button" class="theme-toggle" data-theme-toggle aria-label="Toggle theme"><span data-theme-glyph>&#9790;</span></button>
         </div>
     </header>
 
@@ -39,11 +41,14 @@
                 for (Item item : items) {
                     double discounted = item.getPrice() * (1 - item.getDiscount() / 100.0);
                     if (discounted < 0) discounted = 0;
-                    String img = (item.getImagePath() == null || item.getImagePath().isEmpty())
-                            ? "assets/images/food-menu-1.png" : item.getImagePath();
+                    String rawImg = item.getImagePath();
+                    boolean hasImg = rawImg != null && !rawImg.isEmpty();
+                    boolean remoteImg = hasImg && (rawImg.startsWith("http://") || rawImg.startsWith("https://"));
+                    String imgSrc = remoteImg ? rawImg
+                            : ctx + "/" + (hasImg ? rawImg : "assets/images/food-menu-1.png");
         %>
             <article class="menu-card">
-                <img class="menu-thumb" src="<%= ctx + "/" + img %>" alt="<%= item.getName() %>" />
+                <img class="menu-thumb" src="<%= imgSrc %>" alt="<%= item.getName() %>" />
                 <div class="menu-card-body">
                     <span class="menu-category"><%= item.getCategory() %></span>
                     <h3><%= item.getName() %></h3>

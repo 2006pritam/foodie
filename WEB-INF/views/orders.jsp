@@ -24,6 +24,12 @@
             default: return status.charAt(0) + status.substring(1).toLowerCase();
         }
     }
+    // HTML-escape for safe rendering of user-supplied order fields on the receipt.
+    String esc(String v) {
+        if (v == null) return "";
+        return v.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
+                .replace("\"", "&quot;").replace("'", "&#39;");
+    }
 %>
 <!DOCTYPE html>
 <html lang="en">
@@ -31,7 +37,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>My Orders | Foodie</title>
-    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/style.css?v=2">
+    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/style.css?v=5">
+    <script src="${pageContext.request.contextPath}/assets/js/theme.js"></script>
 </head>
 <body class="dashboard-page orders-page">
 <div class="dashboard-shell">
@@ -43,6 +50,7 @@
         <div class="dashboard-actions">
             <a class="button outline" href="${pageContext.request.contextPath}/menu">Order More</a>
             <a class="button" href="${pageContext.request.contextPath}/dashboard">Dashboard</a>
+            <button type="button" class="theme-toggle" data-theme-toggle aria-label="Toggle theme"><span data-theme-glyph>&#9790;</span></button>
         </div>
     </header>
 
@@ -101,12 +109,82 @@
                     <span>Rider: <strong><%= o.getRiderName() %></strong></span>
                 <% } %>
                 <span class="order-total">Total: <strong>Rs <%= String.format("%.2f", o.getTotal()) %></strong></span>
+                <button type="button" class="button small" onclick="openReceipt('<%= esc(o.getOrderCode()) %>')">Print receipt</button>
             </div>
         </section>
+
+        <!-- Printable invoice for <%= esc(o.getOrderCode()) %> -->
+        <div class="receipt-overlay" id="receipt-<%= esc(o.getOrderCode()) %>" role="dialog" aria-modal="true">
+            <div class="receipt-modal">
+                <button type="button" class="receipt-close" aria-label="Close" onclick="closeReceipt('<%= esc(o.getOrderCode()) %>')">&times;</button>
+                <div class="receipt-brand">
+                    <h2>FOODIE</h2>
+                    <p>Restaurant SaaS &bull; Order Invoice</p>
+                    <p>foodie.example.com</p>
+                </div>
+                <div class="r-line"></div>
+                <div class="receipt-row"><span>Order #:</span><span><%= esc(o.getOrderCode()) %></span></div>
+                <div class="receipt-row"><span>Date:</span><span><%= esc(o.getCreatedAt()) %></span></div>
+                <div class="receipt-row"><span>Status:</span><span><%= label(o.getStatus()) %></span></div>
+                <div class="r-line"></div>
+                <div class="receipt-section-title">CUSTOMER</div>
+                <p class="receipt-muted"><%= esc(o.getCustomerName()) %></p>
+                <p class="receipt-muted"><%= esc(o.getPhone()) %></p>
+                <p class="receipt-muted">Deliver to: <%= esc(o.getAddress()) %></p>
+                <div class="r-line"></div>
+                <table class="receipt-table">
+                    <thead>
+                    <tr><th>ITEM</th><th class="num">QTY</th><th class="num">PRICE</th><th class="num">TOTAL</th></tr>
+                    </thead>
+                    <tbody>
+                    <% for (OrderItem line : o.getItems()) { %>
+                        <tr>
+                            <td><%= esc(line.getItemName()) %></td>
+                            <td class="num"><%= line.getQuantity() %></td>
+                            <td class="num"><%= String.format("%.0f", line.getPrice()) %></td>
+                            <td class="num"><%= String.format("%.0f", line.getLineTotal()) %></td>
+                        </tr>
+                    <% } %>
+                    </tbody>
+                </table>
+                <div class="r-line"></div>
+                <div class="receipt-row"><span>Subtotal:</span><span>Rs <%= String.format("%.2f", o.getTotal()) %></span></div>
+                <div class="receipt-total-row"><span>TOTAL</span><span>Rs <%= String.format("%.2f", o.getTotal()) %></span></div>
+                <div class="receipt-footer">
+                    Thank you for your order!<br>Please keep this receipt for reference.
+                </div>
+                <div class="receipt-actions">
+                    <button type="button" class="button" onclick="window.print()">Print</button>
+                    <button type="button" class="button outline" onclick="closeReceipt('<%= esc(o.getOrderCode()) %>')">Close</button>
+                </div>
+            </div>
+        </div>
     <%
             }
         }
     %>
 </div>
+
+<script>
+    function openReceipt(code) {
+        var el = document.getElementById('receipt-' + code);
+        if (el) el.classList.add('open');
+    }
+    function closeReceipt(code) {
+        var el = document.getElementById('receipt-' + code);
+        if (el) el.classList.remove('open');
+    }
+    // Close when clicking the dark backdrop (outside the modal card).
+    document.addEventListener('click', function (e) {
+        if (e.target.classList && e.target.classList.contains('receipt-overlay')) {
+            e.target.classList.remove('open');
+        }
+    });
+    // If we arrived right after placing an order (?placed=CODE), auto-open its receipt.
+    (function () {
+        var m = window.location.search.match(/[?&]placed=([^&]+)/);
+        if (m) openReceipt(decodeURIComponent(m[1]));
+    })();
+</script>
 </body>
 </html>

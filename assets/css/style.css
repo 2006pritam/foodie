@@ -2790,3 +2790,368 @@ textarea.input-field {
   .checkout-layout { grid-template-columns: 1fr; }
   .status-timeline { flex-wrap: wrap; }
 }
+
+/* ---------------------------------------------------------------
+   Customer AI chat-support widget (dashboard)
+   --------------------------------------------------------------- */
+.chat-widget { position: fixed; right: 24px; bottom: 24px; z-index: 1000; }
+
+.chat-fab {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 20px;
+  border: none;
+  border-radius: 999px;
+  background-color: var(--deep-saffron);
+  color: var(--white);
+  font-family: var(--ff-rubik);
+  font-size: 1.5rem;
+  font-weight: var(--fw-600);
+  box-shadow: 0 12px 30px rgba(255, 137, 38, 0.35);
+  cursor: pointer;
+  transition: var(--transition-1);
+}
+.chat-fab:hover { transform: translateY(-2px); }
+.chat-fab-icon { font-size: 1.9rem; line-height: 1; }
+.chat-fab.is-open { transform: scale(0.96); }
+
+.chat-panel {
+  position: absolute;
+  right: 0;
+  bottom: 70px;
+  width: 350px;
+  max-width: calc(100vw - 32px);
+  height: 460px;
+  max-height: calc(100vh - 130px);
+  display: flex;
+  flex-direction: column;
+  background-color: var(--white);
+  border: 1px solid var(--gainsboro);
+  border-radius: 22px;
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.22);
+  overflow: hidden;
+}
+
+/* The `hidden` attribute must win over `display:flex` above, otherwise the
+   panel can never be closed (open/close is toggled via the hidden attribute). */
+.chat-panel[hidden] { display: none; }
+
+.chat-panel-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 16px 18px;
+  background-color: var(--rich-black-fogra-29);
+  color: var(--white);
+}
+.chat-panel-head strong { display: block; font-size: 1.6rem; }
+.chat-status { font-size: 1.2rem; color: #a7f3d0; }
+.chat-close {
+  background: none;
+  border: none;
+  color: var(--white);
+  font-size: 2.4rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.chat-log {
+  flex: 1;
+  overflow-y: auto;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  background-color: var(--isabelline);
+}
+
+.chat-msg {
+  max-width: 82%;
+  padding: 10px 14px;
+  border-radius: 16px;
+  font-size: 1.4rem;
+  line-height: 1.5;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+}
+.chat-msg.bot {
+  align-self: flex-start;
+  background-color: var(--white);
+  border: 1px solid var(--gainsboro);
+  color: var(--rich-black-fogra-29);
+  border-bottom-left-radius: 4px;
+}
+.chat-msg.user {
+  align-self: flex-end;
+  background-color: var(--deep-saffron);
+  color: var(--white);
+  border-bottom-right-radius: 4px;
+}
+.chat-msg.typing { color: var(--spanish-gray); font-style: italic; }
+
+.chat-input-row {
+  display: flex;
+  gap: 8px;
+  padding: 12px;
+  border-top: 1px solid var(--gainsboro);
+  background-color: var(--white);
+}
+.chat-input-row input {
+  flex: 1;
+  padding: 11px 14px;
+  border: 1px solid var(--cultured);
+  border-radius: 14px;
+  background-color: var(--white);
+  color: var(--rich-black-fogra-29);
+}
+.chat-input-row input:focus { outline: none; border-color: var(--deep-saffron); }
+.chat-input-row input:disabled { opacity: 0.6; }
+
+@media (max-width: 480px) {
+  .chat-fab-text { display: none; }
+  .chat-panel { height: 70vh; }
+}
+
+/* ===============================================================
+   THEME TOGGLE BUTTON (☾ / ☀) — lives in headers & nav
+   =============================================================== */
+.theme-toggle {
+  --tt-size: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  width: var(--tt-size);
+  height: var(--tt-size);
+  padding: 0;
+  margin: 0;
+  border-radius: 50%;
+  border: 1px solid var(--gainsboro);
+  background-color: var(--isabelline);
+  color: var(--onyx);
+  font-size: 2rem;
+  line-height: 0;
+  cursor: pointer;
+  transition: background-color var(--transition-1),
+              color var(--transition-1),
+              border-color var(--transition-1),
+              transform var(--transition-1),
+              box-shadow var(--transition-1);
+}
+/* Keep the glyph perfectly centred regardless of font metrics. */
+.theme-toggle [data-theme-glyph] {
+  display: block;
+  line-height: 1;
+  transform: translateY(-1px);
+  transition: transform var(--transition-2);
+}
+.theme-toggle:hover {
+  background-color: var(--deep-saffron);
+  border-color: var(--deep-saffron);
+  color: var(--white);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 18px hsla(32, 100%, 45%, 0.32);
+}
+.theme-toggle:hover [data-theme-glyph] { transform: translateY(-1px) rotate(-25deg); }
+.theme-toggle:active { transform: translateY(0) scale(0.94); }
+.theme-toggle:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px hsla(32, 100%, 59%, 0.4);
+}
+
+/* On the landing page header the toggle sits next to the 45px pill buttons. */
+.header-btn-group .theme-toggle { --tt-size: 45px; }
+
+/* ===============================================================
+   DARK THEME  —  additive overrides only (light mode untouched)
+   Activated by <html data-theme="dark"> set in assets/js/theme.js
+   =============================================================== */
+html[data-theme="dark"] {
+  --isabelline: #0f141c;      /* app background        */
+  --white: #171e28;           /* panels / cards        */
+  --cultured: #232c3a;        /* input borders/fills   */
+  --gainsboro: #2b3546;       /* borders               */
+  --rich-black-fogra-29: #e8edf5; /* primary heading text */
+  --sonic-silver: #b4becd;    /* body text             */
+  --spanish-gray: #8b96a7;    /* muted text            */
+  --onyx: #cbd4e1;
+}
+
+/* Page + surfaces */
+html[data-theme="dark"] body { background-color: #0f141c; color: #cbd4e1; }
+html[data-theme="dark"] .dashboard-page { background-color: #0f141c; }
+html[data-theme="dark"] .dashboard-header,
+html[data-theme="dark"] .dashboard-panel,
+html[data-theme="dark"] .panel,
+html[data-theme="dark"] .menu-card {
+  background-color: #171e28;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.5);
+}
+html[data-theme="dark"] .menu-card { border-color: #2b3546; }
+
+/* Headings & text stay readable */
+html[data-theme="dark"] .dashboard-brand h1,
+html[data-theme="dark"] .dashboard-panel h2,
+html[data-theme="dark"] .dashboard-panel h3,
+html[data-theme="dark"] .panel-header h2,
+html[data-theme="dark"] .menu-card h3,
+html[data-theme="dark"] .summary-list li strong,
+html[data-theme="dark"] .order-card-footer strong,
+html[data-theme="dark"] .order-summary-row { color: #e8edf5; }
+html[data-theme="dark"] .dashboard-brand p,
+html[data-theme="dark"] .panel-header p,
+html[data-theme="dark"] .dashboard-list,
+html[data-theme="dark"] .summary-list,
+html[data-theme="dark"] .mini-item-list,
+html[data-theme="dark"] .order-card-footer,
+html[data-theme="dark"] .order-meta { color: #b4becd; }
+
+/* Tables */
+html[data-theme="dark"] .data-table th {
+  background-color: #1e2735;
+  color: #cbd4e1;
+  border-color: #2b3546;
+}
+html[data-theme="dark"] .data-table td { border-color: #2b3546; color: #cbd4e1; }
+
+/* Form controls */
+html[data-theme="dark"] input,
+html[data-theme="dark"] select,
+html[data-theme="dark"] textarea,
+html[data-theme="dark"] .qty-input {
+  background-color: #0f141c;
+  border-color: #2b3546;
+  color: #e8edf5;
+}
+html[data-theme="dark"] input::placeholder,
+html[data-theme="dark"] textarea::placeholder { color: #6f7a8b; }
+html[data-theme="dark"] .payment-options,
+html[data-theme="dark"] .payment-option { color: #cbd4e1; }
+
+/* Buttons: keep the solid orange; adjust the outline variant for dark */
+html[data-theme="dark"] .button.outline {
+  border-color: #3a465a;
+  color: #e8edf5;
+  background-color: transparent;
+}
+html[data-theme="dark"] .theme-toggle {
+  background-color: #1e2735;
+  border-color: #33405480;
+  color: #ffd479;
+}
+html[data-theme="dark"] .theme-toggle:hover {
+  background-color: #ffd479;
+  border-color: #ffd479;
+  color: #141a24;
+  box-shadow: 0 8px 18px hsla(41, 100%, 60%, 0.28);
+}
+
+/* Timeline dividers */
+html[data-theme="dark"] .order-card-footer { border-top-color: #2b3546; }
+
+/* Chat widget */
+html[data-theme="dark"] .chat-panel { background-color: #171e28; border-color: #2b3546; }
+html[data-theme="dark"] .chat-log { background-color: #0f141c; }
+html[data-theme="dark"] .chat-msg.bot { background-color: #1e2735; border-color: #2b3546; color: #e8edf5; }
+html[data-theme="dark"] .chat-input-row { background-color: #171e28; border-top-color: #2b3546; }
+
+/* Landing page (index) light sections */
+html[data-theme="dark"] .header.active,
+html[data-theme="dark"] .header { background-color: #171e28; }
+html[data-theme="dark"] .navbar-link { color: #cbd4e1; }
+html[data-theme="dark"] :is(.about, .menu, .blog, .cta, .delivery, .banner) { background-color: #0f141c; }
+html[data-theme="dark"] .food-menu-card { background-color: #171e28; }
+html[data-theme="dark"] .section-text,
+html[data-theme="dark"] .food-menu-card .card-title,
+html[data-theme="dark"] .blog-card .card-title { color: #cbd4e1; }
+
+/* ===============================================================
+   PRINTABLE ORDER RECEIPT / BILL
+   =============================================================== */
+.receipt-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 2000;
+  display: none;
+  align-items: flex-start;
+  justify-content: center;
+  padding: 30px 15px;
+  overflow-y: auto;
+  background-color: rgba(0, 0, 0, 0.7);
+}
+.receipt-overlay.open { display: flex; }
+
+.receipt-modal {
+  position: relative;
+  width: 360px;
+  max-width: 100%;
+  background: #ffffff;
+  color: #111;
+  border-radius: 6px;
+  padding: 26px 26px 30px;
+  font-family: 'Courier New', Courier, monospace;
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.4);
+}
+.receipt-close {
+  position: absolute;
+  top: 10px;
+  right: 14px;
+  border: none;
+  background: none;
+  font-size: 2.4rem;
+  line-height: 1;
+  color: #888;
+  cursor: pointer;
+}
+.receipt-brand { text-align: center; margin-bottom: 14px; }
+.receipt-brand h2 {
+  margin: 0;
+  font-size: 2.2rem;
+  letter-spacing: 2px;
+  color: #111;
+}
+.receipt-brand p { margin: 2px 0; font-size: 1.25rem; color: #444; }
+
+.receipt-modal .r-line { border-top: 1px dashed #999; margin: 12px 0; }
+.receipt-row { display: flex; justify-content: space-between; font-size: 1.3rem; margin: 3px 0; }
+.receipt-row span:last-child { font-weight: 700; text-align: right; }
+.receipt-section-title { font-weight: 700; font-size: 1.3rem; margin-bottom: 4px; letter-spacing: 1px; }
+.receipt-muted { font-size: 1.3rem; color: #333; margin: 2px 0; }
+
+.receipt-table { width: 100%; border-collapse: collapse; font-size: 1.25rem; margin-top: 4px; }
+.receipt-table th {
+  text-align: left;
+  border-bottom: 1px solid #333;
+  padding: 4px 2px;
+  font-size: 1.2rem;
+  letter-spacing: 1px;
+}
+.receipt-table th.num, .receipt-table td.num { text-align: right; }
+.receipt-table td { padding: 6px 2px; vertical-align: top; }
+.receipt-total-row {
+  display: flex;
+  justify-content: space-between;
+  font-size: 1.9rem;
+  font-weight: 700;
+  margin-top: 8px;
+}
+.receipt-footer { text-align: center; margin-top: 16px; font-size: 1.25rem; color: #444; }
+.receipt-actions { display: flex; gap: 10px; margin-top: 20px; }
+.receipt-actions .button { flex: 1; }
+
+/* When printing, show ONLY the active receipt on a clean white page. */
+@media print {
+  body * { visibility: hidden !important; }
+  .receipt-overlay.open, .receipt-overlay.open * { visibility: visible !important; }
+  .receipt-overlay.open {
+    position: absolute;
+    inset: 0;
+    display: block;
+    background: #fff;
+    padding: 0;
+  }
+  .receipt-modal { box-shadow: none; margin: 0 auto; }
+  .receipt-close, .receipt-actions { display: none !important; }
+}
