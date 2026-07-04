@@ -30,9 +30,13 @@ public final class DatabaseManager {
                 props.load(is);
             }
 
-            url = props.getProperty("db.url");
-            username = props.getProperty("db.username");
-            password = props.getProperty("db.password");
+            String envUrl = System.getenv("DB_URL");
+            String envUsername = System.getenv("DB_USERNAME");
+            String envPassword = System.getenv("DB_PASSWORD");
+
+            url = (envUrl != null && !envUrl.isBlank()) ? envUrl : props.getProperty("db.url");
+            username = (envUsername != null && !envUsername.isBlank()) ? envUsername : props.getProperty("db.username");
+            password = (envPassword != null && !envPassword.isBlank()) ? envPassword : props.getProperty("db.password");
 
             if (url == null || url.isEmpty() || url.contains("YOUR_ENDPOINT_HOST")) {
                 throw new IllegalStateException("db.properties is not configured correctly.");

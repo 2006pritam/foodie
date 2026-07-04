@@ -46,9 +46,13 @@ public final class ChatService {
             try (InputStream is = ChatService.class.getClassLoader().getResourceAsStream("db.properties")) {
                 if (is != null) props.load(is);
             }
-            url = trimOrNull(props.getProperty("nvidia.api.url"));
-            key = trimOrNull(props.getProperty("nvidia.api.key"));
-            mdl = trimOrNull(props.getProperty("nvidia.model"));
+            String envUrl = System.getenv("NVIDIA_API_URL");
+            String envKey = System.getenv("NVIDIA_API_KEY");
+            String envModel = System.getenv("NVIDIA_MODEL");
+
+            url = trimOrNull(envUrl != null ? envUrl : props.getProperty("nvidia.api.url"));
+            key = trimOrNull(envKey != null ? envKey : props.getProperty("nvidia.api.key"));
+            mdl = trimOrNull(envModel != null ? envModel : props.getProperty("nvidia.model"));
         } catch (IOException e) {
             LOGGER.log(Level.SEVERE, "Failed to load chat configuration", e);
         }
