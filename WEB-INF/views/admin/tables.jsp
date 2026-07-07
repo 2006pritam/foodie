@@ -22,7 +22,7 @@
 <head>
     <meta charset="UTF-8">
     <title>Table Management | Foodie Admin</title>
-    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/style.css?v=11">
+    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/style.css?v=12">
     <script src="${pageContext.request.contextPath}/assets/js/theme.js"></script>
 </head>
 <body class="dashboard-page admin-tables-page">

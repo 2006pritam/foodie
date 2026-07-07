@@ -15,7 +15,7 @@
   <!-- 
     - custom css link
   -->
-  <link rel="stylesheet" href="./assets/css/style.css?v=11">
+  <link rel="stylesheet" href="./assets/css/style.css?v=12">
   <script src="./assets/js/theme.js"></script>
 
   <!--
@@ -74,6 +74,10 @@
 
           <li class="nav-item">
             <a href="#contact" class="navbar-link" data-nav-link>Contact Us</a>
+          </li>
+
+          <li class="nav-item">
+            <a href="#developers" class="navbar-link" data-nav-link>Developers</a>
           </li>
 
         </ul>
@@ -1151,6 +1155,62 @@
 
 
 
+      <!-- - DEVELOPERS - -->
+
+      <section class="section section-divider gray developers" id="developers" aria-label="developers">
+        <div class="container">
+
+          <p class="section-subtitle text-center">Meet The Team</p>
+
+          <h2 class="h2 section-title text-center">Developers</h2>
+
+          <p class="section-text text-center">
+            The team behind Foodie.
+          </p>
+
+          <ul class="developers-grid">
+
+            <li>
+              <div class="developer-card">
+                <figure class="developer-avatar">
+                  <img src="https://raw.githubusercontent.com/2006pritam/PHOTO/main/p.k.m.jpg"
+                       width="160" height="160" loading="lazy" alt="Pritam Kumar Modak">
+                </figure>
+                <h3 class="developer-name">PRITAM KUMAR MODAK</h3>
+                <p class="developer-role">BCA</p>
+                <p class="developer-info">Supreme Institute of Management and Technology</p>
+              </div>
+            </li>
+
+            <li>
+              <div class="developer-card">
+                <figure class="developer-avatar">
+                  <img src="https://raw.githubusercontent.com/2006pritam/PHOTO/main/roni%20ghosh.jpg"
+                       width="160" height="160" loading="lazy" alt="Roni Ghosh">
+                </figure>
+                <h3 class="developer-name">RONI GHOSH</h3>
+                <p class="developer-role">BCA</p>
+                <p class="developer-info">Supreme Institute of Management and Technology</p>
+              </div>
+            </li>
+
+            <li>
+              <div class="developer-card">
+                <figure class="developer-avatar">
+                  <img src="https://raw.githubusercontent.com/2006pritam/PHOTO/main/soumi.jpg"
+                       width="160" height="160" loading="lazy" alt="Soumi Pal">
+                </figure>
+                <h3 class="developer-name">SOUMI PAL</h3>
+                <p class="developer-role">BCA</p>
+                <p class="developer-info">Supreme Institute of Management and Technology</p>
+              </div>
+            </li>
+
+          </ul>
+
+        </div>
+      </section>
+
     </article>
   </main>
 
@@ -1272,7 +1332,7 @@
     <div class="footer-bottom">
       <div class="container">
         <p class="copyright-text">
-          &copy; 2025 All Rights Reserved by <a href="#" class="copyright-link">Pritam Kumar Modak, Roni Ghosh, Soumi Pal</a>.
+          &copy; 2026 All Rights Reserved by <a href="#" class="copyright-link">Pritam Kumar Modak, Roni Ghosh, Soumi Pal</a>.
         </p>
       </div>
     </div>
