@@ -15,7 +15,7 @@
 <head>
     <meta charset="UTF-8">
     <title>Manage Orders | Foodie Admin</title>
-    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/style.css?v=12">
+    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/style.css?v=13">
     <script src="${pageContext.request.contextPath}/assets/js/theme.js"></script>
 </head>
 <body class="dashboard-page admin-orders-page">

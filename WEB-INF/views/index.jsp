@@ -15,7 +15,7 @@
   <!-- 
     - custom css link
   -->
-  <link rel="stylesheet" href="./assets/css/style.css?v=12">
+  <link rel="stylesheet" href="./assets/css/style.css?v=13">
   <script src="./assets/js/theme.js"></script>
 
   <!--

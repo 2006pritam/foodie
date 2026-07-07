@@ -7,7 +7,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Your Cart | Foodie</title>
-    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/style.css?v=12">
+    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/style.css?v=13">
     <script src="${pageContext.request.contextPath}/assets/js/theme.js"></script>
 </head>
 <body class="dashboard-page cart-page">

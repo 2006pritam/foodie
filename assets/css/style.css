@@ -3490,3 +3490,24 @@ html[data-theme="dark"] .blog-card .card-title { color: #cbd4e1; }
   margin-top: 8px;
   color: var(--sonic-silver);
 }
+
+/* ===================== Dark-mode logo fix + rotating hero burger ===================== */
+
+/* In dark mode the header background is dark, so force the "Foodie." wordmark light
+   (the .span dot stays saffron). Also covers the scrolled/active header. */
+html[data-theme="dark"] .logo,
+html[data-theme="dark"] .header.active .logo { color: #f5f7fa; }
+html[data-theme="dark"] .header.active .navbar-link { color: #cbd4e1; }
+
+/* Continuously rotate the hero burger. */
+.hero-img {
+  transform-origin: center center;
+  animation: heroSpin 18s linear infinite;
+}
+@keyframes heroSpin {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .hero-img { animation: none; }
+}

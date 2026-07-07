@@ -20,7 +20,7 @@
 <head>
     <meta charset="UTF-8">
     <title>Admin Dashboard | Foodie SaaS</title>
-    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/style.css?v=12">
+    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/style.css?v=13">
     <script src="${pageContext.request.contextPath}/assets/js/theme.js"></script>
 </head>
 <body class="dashboard-page admin-dashboard">

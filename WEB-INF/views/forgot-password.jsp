@@ -8,7 +8,7 @@
   <title>Forgot Password - Foodie</title>
 
   <link rel="shortcut icon" href="./favicon.svg" type="image/svg+xml">
-  <link rel="stylesheet" href="./assets/css/style.css?v=12">
+  <link rel="stylesheet" href="./assets/css/style.css?v=13">
   <script src="./assets/js/theme.js"></script>
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
