@@ -1,6 +1,7 @@
 package com.foodie.web;
 
 import com.foodie.chat.ChatService;
+import com.foodie.db.FeedbackDao;
 import com.foodie.db.ItemDao;
 import com.foodie.db.OrderDao;
 import com.foodie.db.ReservationDao;
@@ -62,6 +63,7 @@ public class FoodieServlet extends HttpServlet {
     private final OrderDao orderDao = new OrderDao();
     private final TableDao tableDao = new TableDao();
     private final ReservationDao reservationDao = new ReservationDao();
+    private final FeedbackDao feedbackDao = new FeedbackDao();
 
     // ---------------------------------------------------------------
     // GET
@@ -197,7 +199,7 @@ public class FoodieServlet extends HttpServlet {
             case "/reservations":       handleReservationsPost(req, res);      return;
             case "/admin/tables":       handleAdminTablesPost(req, res);       return;
             case "/admin/reservations": handleAdminReservationsPost(req, res); return;
-            default:                 handleReservation(req, res);
+            default:                 handleFeedback(req, res);
         }
     }
 
@@ -371,20 +373,32 @@ public class FoodieServlet extends HttpServlet {
     }
 
     // ---------------------------------------------------------------
-    // Reservation handler (existing functionality)
+    // Public feedback form (footer)
     // ---------------------------------------------------------------
 
-    private void handleReservation(HttpServletRequest req, HttpServletResponse res)
+    /** POST /home – persist a feedback message from the footer form. */
+    private void handleFeedback(HttpServletRequest req, HttpServletResponse res)
             throws ServletException, IOException {
 
-        Map<String, String> r = new LinkedHashMap<>();
-        r.put("Name",    param(req, "full_name"));
-        r.put("Email",   param(req, "email_address"));
-        r.put("People",  param(req, "total_person"));
-        r.put("Date",    param(req, "booking_date"));
-        r.put("Message", param(req, "message"));
+        String name    = param(req, "name");
+        String email   = param(req, "email");
+        String message = param(req, "message");
 
-        showHome(req, res, buildReservationFeedback(r));
+        if (blank(name) || blank(message)) {
+            showHome(req, res, "<p class=\"reservation-message error\">"
+                + "Please enter your name and a message.</p>");
+            return;
+        }
+
+        try {
+            feedbackDao.create(name, email, message);
+            showHome(req, res, "<div class=\"reservation-message success\">"
+                + "<p>Thanks, " + escape(name) + "! Your feedback has been received.</p></div>");
+        } catch (SQLException e) {
+            LOGGER.log(Level.SEVERE, "Failed to save feedback", e);
+            showHome(req, res, "<p class=\"reservation-message error\">"
+                + "Sorry, we couldn't submit your feedback. Please try again.</p>");
+        }
     }
 
     // ---------------------------------------------------------------
@@ -421,29 +435,6 @@ public class FoodieServlet extends HttpServlet {
      */
     private String msg(String type, String message) {
         return "<p class=\"auth-message " + type + "\">" + escape(message) + "</p>";
-    }
-
-    private String buildReservationFeedback(Map<String, String> r) {
-        if (blank(r.get("Name")) || blank(r.get("Email")) || blank(r.get("Message"))) {
-            return "<p class=\"reservation-message error\">" +
-                   "Please fill all required reservation details.</p>";
-        }
-        StringBuilder sb = new StringBuilder();
-        sb.append("<div class=\"reservation-message success\">");
-        sb.append("<p>Thanks, ").append(escape(r.get("Name")))
-          .append(". Your table request has been received.</p><ul>");
-        detail(sb, "Email",  r.get("Email"));
-        detail(sb, "People", r.get("People"));
-        detail(sb, "Date",   r.get("Date"));
-        sb.append("</ul></div>");
-        return sb.toString();
-    }
-
-    private void detail(StringBuilder sb, String label, String value) {
-        if (!blank(value)) {
-            sb.append("<li><strong>").append(label).append(":</strong> ")
-              .append(escape(value)).append("</li>");
-        }
     }
 
     // ---------------------------------------------------------------
@@ -839,6 +830,8 @@ public class FoodieServlet extends HttpServlet {
             req.setAttribute("deliveredCount", orderDao.countByStatus(OrderDao.DELIVERED));
             req.setAttribute("rejectedCount",  orderDao.countByStatus(OrderDao.REJECTED));
             req.setAttribute("recentOrders",   all.subList(0, Math.min(5, all.size())));
+            req.setAttribute("feedbackCount",  feedbackDao.countAll());
+            req.setAttribute("recentFeedback", feedbackDao.findRecent(8));
         } catch (SQLException e) {
             LOGGER.log(Level.SEVERE, "Failed to load admin dashboard metrics", e);
         }

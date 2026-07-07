@@ -1,6 +1,7 @@
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
 <%@ page import="java.util.List" %>
 <%@ page import="com.foodie.model.Order" %>
+<%@ page import="com.foodie.model.Feedback" %>
 <%!
     String badgeClass(String status) { return status == null ? "pending" : status.toLowerCase(); }
     String label(String status) {
@@ -9,13 +10,17 @@
         return status.charAt(0) + status.substring(1).toLowerCase();
     }
     int num(Object o) { return o == null ? 0 : ((Number) o).intValue(); }
+    String esc(String v) {
+        if (v == null) return "";
+        return v.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;");
+    }
 %>
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <title>Admin Dashboard | Foodie SaaS</title>
-    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/style.css?v=10">
+    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/style.css?v=11">
     <script src="${pageContext.request.contextPath}/assets/js/theme.js"></script>
 </head>
 <body class="dashboard-page admin-dashboard">
@@ -78,9 +83,45 @@
                 <strong><%= num(request.getAttribute("rejectedCount")) %></strong>
                 <small>Declined</small>
             </article>
+            <article class="metric-card accent-blue">
+                <span class="metric-label">Feedback</span>
+                <strong><%= num(request.getAttribute("feedbackCount")) %></strong>
+                <small>Messages received</small>
+            </article>
         </section>
 
         <section class="dashboard-grid">
+            <article class="dashboard-panel panel-large feedback-panel">
+                <div class="panel-header">
+                    <h2>Customer Feedback</h2>
+                </div>
+                <ul class="feedback-list">
+                    <%
+                        List<Feedback> recentFeedback = (List<Feedback>) request.getAttribute("recentFeedback");
+                        if (recentFeedback == null || recentFeedback.isEmpty()) {
+                    %>
+                        <li><span class="order-meta">No feedback yet.</span></li>
+                    <%
+                        } else {
+                            for (Feedback f : recentFeedback) {
+                    %>
+                        <li class="feedback-item">
+                            <div class="feedback-head">
+                                <span class="order-title"><%= esc(f.getName()) %></span>
+                                <span class="order-meta"><%= esc(f.getCreatedAt()) %></span>
+                            </div>
+                            <% if (f.getEmail() != null && !f.getEmail().isEmpty()) { %>
+                                <span class="order-meta"><%= esc(f.getEmail()) %></span>
+                            <% } %>
+                            <p class="feedback-message"><%= esc(f.getMessage()) %></p>
+                        </li>
+                    <%
+                            }
+                        }
+                    %>
+                </ul>
+            </article>
+
             <article class="dashboard-panel panel-large recent-orders">
                 <div class="panel-header">
                     <h2>Recent Orders</h2>

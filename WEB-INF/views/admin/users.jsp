@@ -6,7 +6,7 @@
 <head>
     <meta charset="UTF-8">
     <title>User Management | Foodie Admin</title>
-    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/style.css?v=10">
+    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/style.css?v=11">
     <script src="${pageContext.request.contextPath}/assets/js/theme.js"></script>
 </head>
 <body class="dashboard-page admin-users-page">

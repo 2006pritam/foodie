@@ -15,7 +15,7 @@
   <!-- 
     - custom css link
   -->
-  <link rel="stylesheet" href="./assets/css/style.css?v=10">
+  <link rel="stylesheet" href="./assets/css/style.css?v=11">
   <script src="./assets/js/theme.js"></script>
 
   <!--
@@ -1245,38 +1245,24 @@
 
         </ul>
 
-        <form action="home" method="post" class="footer-form" id="reservation">
+        <form action="home" method="post" class="footer-form" id="feedback">
 
-          <p class="footer-list-title">Book a Table</p>
+          <p class="footer-list-title">Send Feedback</p>
           <%= request.getAttribute("reservationMessage") == null ? "" : request.getAttribute("reservationMessage") %>
 
           <div class="input-wrapper">
 
-            <input type="text" name="full_name" required placeholder="Your Name" aria-label="Your Name"
+            <input type="text" name="name" required placeholder="Your Name" aria-label="Your Name"
               class="input-field">
 
-            <input type="email" name="email_address" required placeholder="Email" aria-label="Email"
+            <input type="email" name="email" placeholder="Email (optional)" aria-label="Email"
               class="input-field">
 
           </div>
 
-          <div class="input-wrapper">
+          <textarea name="message" required placeholder="Your feedback" aria-label="Feedback" class="input-field"></textarea>
 
-            <select name="total_person" aria-label="Total person" class="input-field">
-              <option value="person">Person</option>
-              <option value="2 person">2 Person</option>
-              <option value="3 person">3 Person</option>
-              <option value="4 person">4 Person</option>
-              <option value="5 person">5 Person</option>
-            </select>
-
-            <input type="date" name="booking_date" aria-label="Reservation date" class="input-field">
-
-          </div>
-
-          <textarea name="message" required placeholder="Message" aria-label="Message" class="input-field"></textarea>
-
-          <button type="submit" class="btn">Book a Table</button>
+          <button type="submit" class="btn">Send Feedback</button>
 
         </form>
 
