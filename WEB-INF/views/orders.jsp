@@ -21,8 +21,13 @@
         if (status == null) return "Pending";
         switch (status) {
             case "PICKED_UP": return "Picked up";
+            case "CANCELLED": return "Cancelled";
             default: return status.charAt(0) + status.substring(1).toLowerCase();
         }
+    }
+    // Customers may cancel their own order only before a rider picks it up.
+    boolean cancellable(String status) {
+        return "PENDING".equals(status) || "ACCEPTED".equals(status);
     }
     // HTML-escape for safe rendering of user-supplied order fields on the receipt.
     String esc(String v) {
@@ -37,7 +42,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>My Orders | Foodie</title>
-    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/style.css?v=5">
+    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/style.css?v=10">
     <script src="${pageContext.request.contextPath}/assets/js/theme.js"></script>
 </head>
 <body class="dashboard-page orders-page">
@@ -49,7 +54,7 @@
         </div>
         <div class="dashboard-actions">
             <a class="button outline" href="${pageContext.request.contextPath}/menu">Order More</a>
-            <a class="button" href="${pageContext.request.contextPath}/dashboard">Dashboard</a>
+            <a class="button danger" href="${pageContext.request.contextPath}/logout">Sign Out</a>
             <button type="button" class="theme-toggle" data-theme-toggle aria-label="Toggle theme"><span data-theme-glyph>&#9790;</span></button>
         </div>
     </header>
@@ -70,6 +75,7 @@
             String[] steps = {"Placed", "Accepted", "Picked up", "Delivered"};
             for (Order o : orders) {
                 boolean rejected = "REJECTED".equals(o.getStatus());
+                boolean cancelled = "CANCELLED".equals(o.getStatus());
                 int step = stepFor(o.getStatus());
     %>
         <section class="panel order-card">
@@ -83,6 +89,8 @@
 
             <% if (rejected) { %>
                 <p class="order-rejected-note">This order was rejected by the restaurant.</p>
+            <% } else if (cancelled) { %>
+                <p class="order-rejected-note">You cancelled this order.</p>
             <% } else { %>
                 <div class="status-timeline">
                     <% for (int i = 0; i < steps.length; i++) { %>
@@ -91,6 +99,19 @@
                             <span class="timeline-label"><%= steps[i] %></span>
                         </div>
                     <% } %>
+                </div>
+            <% } %>
+
+            <%
+                String pin = o.getDeliveryPin();
+                boolean showPin = pin != null && !pin.isEmpty()
+                        && ("ACCEPTED".equals(o.getStatus()) || "PICKED_UP".equals(o.getStatus()));
+                if (showPin) {
+            %>
+                <div class="delivery-pin-box">
+                    <span class="delivery-pin-label">Delivery PIN</span>
+                    <span class="delivery-pin-code"><%= esc(pin) %></span>
+                    <span class="delivery-pin-hint">Share this with your rider to confirm delivery.</span>
                 </div>
             <% } %>
 
@@ -104,12 +125,23 @@
             </ul>
 
             <div class="order-card-footer">
+                <% if (o.getTableName() != null && !o.getTableName().isEmpty()) { %>
+                    <span>Table: <strong><%= esc(o.getTableName()) %></strong></span>
+                <% } %>
                 <span>Deliver to: <strong><%= o.getAddress() %></strong> (<%= o.getPhone() %>)</span>
                 <% if (o.getRiderName() != null && !o.getRiderName().isEmpty()) { %>
                     <span>Rider: <strong><%= o.getRiderName() %></strong></span>
                 <% } %>
                 <span class="order-total">Total: <strong>Rs <%= String.format("%.2f", o.getTotal()) %></strong></span>
                 <button type="button" class="button small" onclick="openReceipt('<%= esc(o.getOrderCode()) %>')">Print receipt</button>
+                <% if (cancellable(o.getStatus())) { %>
+                    <form method="post" action="${pageContext.request.contextPath}/orders" class="order-cancel-form"
+                          onsubmit="return confirm('Cancel this order? This cannot be undone.');">
+                        <input type="hidden" name="action" value="cancel" />
+                        <input type="hidden" name="orderId" value="<%= o.getId() %>" />
+                        <button type="submit" class="button small danger">Cancel order</button>
+                    </form>
+                <% } %>
             </div>
         </section>
 
@@ -125,6 +157,9 @@
                 <div class="r-line"></div>
                 <div class="receipt-row"><span>Order #:</span><span><%= esc(o.getOrderCode()) %></span></div>
                 <div class="receipt-row"><span>Date:</span><span><%= esc(o.getCreatedAt()) %></span></div>
+                <% if (o.getTableName() != null && !o.getTableName().isEmpty()) { %>
+                    <div class="receipt-row"><span>Table:</span><span><%= esc(o.getTableName()) %></span></div>
+                <% } %>
                 <div class="receipt-row"><span>Status:</span><span><%= label(o.getStatus()) %></span></div>
                 <div class="r-line"></div>
                 <div class="receipt-section-title">CUSTOMER</div>
@@ -186,5 +221,7 @@
         if (m) openReceipt(decodeURIComponent(m[1]));
     })();
 </script>
+
+<%@ include file="chat-widget.jsp" %>
 </body>
 </html>

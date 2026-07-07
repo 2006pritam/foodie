@@ -13,8 +13,7 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+import java.util.concurrent.ThreadLocalRandom;
 
 /**
  * Data-access object for the {@code orders} / {@code order_items} tables in Neon PostgreSQL.
@@ -24,19 +23,18 @@ import java.util.logging.Logger;
  */
 public class OrderDao {
 
-    private static final Logger LOGGER = Logger.getLogger(OrderDao.class.getName());
-
     public static final String PENDING   = "PENDING";
     public static final String ACCEPTED  = "ACCEPTED";
     public static final String REJECTED  = "REJECTED";
     public static final String PICKED_UP = "PICKED_UP";
     public static final String DELIVERED = "DELIVERED";
+    public static final String CANCELLED = "CANCELLED";
 
     public OrderDao() {
         try {
             ensureTables();
         } catch (SQLException e) {
-            LOGGER.log(Level.WARNING, "OrderDao initialization skipped because the database is unavailable.", e);
+            throw new RuntimeException("Failed to initialize OrderDao", e);
         }
     }
 
@@ -55,6 +53,9 @@ public class OrderDao {
             "status VARCHAR(20) NOT NULL DEFAULT 'PENDING', " +
             "rider_id INTEGER, " +
             "rider_name VARCHAR(255), " +
+            "delivery_pin VARCHAR(4), " +
+            "table_id INTEGER, " +
+            "table_name VARCHAR(120), " +
             "created_at TIMESTAMP WITHOUT TIME ZONE DEFAULT NOW()" +
             ")";
 
@@ -72,6 +73,10 @@ public class OrderDao {
              Statement st = conn.createStatement()) {
             st.execute(ordersSql);
             st.execute(itemsSql);
+            // Migrations for deployments created before these columns existed.
+            st.execute("ALTER TABLE orders ADD COLUMN IF NOT EXISTS delivery_pin VARCHAR(4)");
+            st.execute("ALTER TABLE orders ADD COLUMN IF NOT EXISTS table_id INTEGER");
+            st.execute("ALTER TABLE orders ADD COLUMN IF NOT EXISTS table_name VARCHAR(120)");
         }
     }
 
@@ -87,7 +92,8 @@ public class OrderDao {
     public int createOrder(Order order, List<OrderItem> items) throws SQLException {
         final String orderSql =
             "INSERT INTO orders (order_code, user_id, customer_name, tenant_id, address, phone, " +
-            "payment_method, total, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
+            "payment_method, total, status, table_id, table_name) " +
+            "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
         final String itemSql =
             "INSERT INTO order_items (order_id, item_id, item_name, price, quantity) " +
             "VALUES (?, ?, ?, ?, ?)";
@@ -108,6 +114,12 @@ public class OrderDao {
                 ps.setString(7, order.getPaymentMethod());
                 ps.setDouble(8, order.getTotal());
                 ps.setString(9, PENDING);
+                if (order.getTableId() > 0) {
+                    ps.setInt(10, order.getTableId());
+                } else {
+                    ps.setNull(10, java.sql.Types.INTEGER);
+                }
+                ps.setString(11, order.getTableName());
                 ps.executeUpdate();
 
                 try (ResultSet keys = ps.getGeneratedKeys()) {
@@ -217,6 +229,10 @@ public class OrderDao {
         int riderId = rs.getInt("rider_id");
         o.setRiderId(rs.wasNull() ? null : riderId);
         o.setRiderName(rs.getString("rider_name"));
+        o.setDeliveryPin(rs.getString("delivery_pin"));
+        int tableId = rs.getInt("table_id");
+        o.setTableId(rs.wasNull() ? 0 : tableId);
+        o.setTableName(rs.getString("table_name"));
         Timestamp ts = rs.getTimestamp("created_at");
         o.setCreatedAt(ts == null ? "" : ts.toString());
         return o;
@@ -260,14 +276,56 @@ public class OrderDao {
     // Status transitions
     // ---------------------------------------------------------------
 
-    /** Admin accept / reject. Only applies while the order is still PENDING. */
+    /**
+     * Admin accept / reject. Only applies while the order is still PENDING.
+     * Accepting also assigns a unique 4-digit delivery PIN that the customer
+     * hands to the rider to confirm delivery.
+     */
     public boolean updateStatus(int id, String status) throws SQLException {
+        if (ACCEPTED.equals(status)) {
+            final String sql =
+                "UPDATE orders SET status = 'ACCEPTED', delivery_pin = ? WHERE id = ? AND status = 'PENDING'";
+            String pin = generateUniqueDeliveryPin();
+            try (Connection conn = DatabaseManager.getConnection();
+                 PreparedStatement ps = conn.prepareStatement(sql)) {
+                ps.setString(1, pin);
+                ps.setInt(2, id);
+                return ps.executeUpdate() == 1;
+            }
+        }
         final String sql = "UPDATE orders SET status = ? WHERE id = ? AND status = 'PENDING'";
         try (Connection conn = DatabaseManager.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setString(1, status);
             ps.setInt(2, id);
             return ps.executeUpdate() == 1;
+        }
+    }
+
+    /**
+     * Generate a 4-digit PIN not currently in use by any in-flight order
+     * (ACCEPTED or PICKED_UP), so two active deliveries never share a PIN.
+     * Falls back to a plain random PIN after a bounded number of attempts.
+     */
+    private String generateUniqueDeliveryPin() throws SQLException {
+        for (int attempt = 0; attempt < 50; attempt++) {
+            String pin = String.format("%04d", ThreadLocalRandom.current().nextInt(10000));
+            if (!pinInUse(pin)) {
+                return pin;
+            }
+        }
+        return String.format("%04d", ThreadLocalRandom.current().nextInt(10000));
+    }
+
+    private boolean pinInUse(String pin) throws SQLException {
+        final String sql =
+            "SELECT 1 FROM orders WHERE delivery_pin = ? AND status IN ('ACCEPTED', 'PICKED_UP') LIMIT 1";
+        try (Connection conn = DatabaseManager.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setString(1, pin);
+            try (ResultSet rs = ps.executeQuery()) {
+                return rs.next();
+            }
         }
     }
 
@@ -290,15 +348,42 @@ public class OrderDao {
         }
     }
 
-    /** Rider marks their own picked-up order as delivered. */
-    public boolean markDelivered(int id, int riderId) throws SQLException {
+    /**
+     * Customer cancels their own order. Only allowed while the order is still
+     * cancellable (PENDING or ACCEPTED — i.e. before a rider has picked it up).
+     * The user_id + status guard makes this both ownership- and race-safe:
+     * a customer can never cancel someone else's order, nor one already picked
+     * up, delivered, rejected, or cancelled.
+     *
+     * @return true when this call actually cancelled the order.
+     */
+    public boolean cancelOrder(int id, int userId) throws SQLException {
+        final String sql =
+            "UPDATE orders SET status = 'CANCELLED' " +
+            "WHERE id = ? AND user_id = ? AND status IN ('PENDING', 'ACCEPTED')";
+        try (Connection conn = DatabaseManager.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, id);
+            ps.setInt(2, userId);
+            return ps.executeUpdate() == 1;
+        }
+    }
+
+    /**
+     * Rider marks their own picked-up order as delivered, but only when the
+     * supplied 4-digit PIN matches the one assigned at acceptance. The PIN check
+     * is part of the WHERE clause, so verification is atomic: a wrong PIN simply
+     * updates zero rows and returns false.
+     */
+    public boolean markDelivered(int id, int riderId, String pin) throws SQLException {
         final String sql =
             "UPDATE orders SET status = 'DELIVERED' " +
-            "WHERE id = ? AND rider_id = ? AND status = 'PICKED_UP'";
+            "WHERE id = ? AND rider_id = ? AND status = 'PICKED_UP' AND delivery_pin = ?";
         try (Connection conn = DatabaseManager.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setInt(1, id);
             ps.setInt(2, riderId);
+            ps.setString(3, pin);
             return ps.executeUpdate() == 1;
         }
     }

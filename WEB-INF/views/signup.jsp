@@ -8,7 +8,7 @@
   <title>Sign Up - Foodie</title>
 
   <link rel="shortcut icon" href="./favicon.svg" type="image/svg+xml">
-  <link rel="stylesheet" href="./assets/css/style.css?v=5">
+  <link rel="stylesheet" href="./assets/css/style.css?v=10">
   <script src="./assets/js/theme.js"></script>
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -49,7 +49,7 @@
           <a href="login" class="btn btn-hover auth-header-btn">Login / Sign Up</a>
         <% } %>
 
-        <button type="button" class="theme-toggle" data-theme-toggle aria-label="Toggle theme"><span data-theme-glyph>☾</span></button>
+        <button type="button" class="theme-toggle" data-theme-toggle aria-label="Toggle theme"><span data-theme-glyph>&#9790;</span></button>
 
         <button class="nav-toggle-btn" aria-label="Toggle Menu" data-menu-toggle-btn>
           <span class="line top"></span>

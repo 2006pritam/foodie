@@ -7,7 +7,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Menu | Foodie</title>
-    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/style.css?v=5">
+    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/style.css?v=10">
     <script src="${pageContext.request.contextPath}/assets/js/theme.js"></script>
 </head>
 <body class="dashboard-page menu-page">
@@ -20,7 +20,8 @@
         <div class="dashboard-actions">
             <a class="button outline" href="${pageContext.request.contextPath}/cart">Cart (<%= request.getAttribute("cartCount") != null ? request.getAttribute("cartCount") : 0 %>)</a>
             <a class="button outline" href="${pageContext.request.contextPath}/orders">My Orders</a>
-            <a class="button" href="${pageContext.request.contextPath}/dashboard">Dashboard</a>
+            <a class="button outline" href="${pageContext.request.contextPath}/reservations">Table Booking</a>
+            <a class="button danger" href="${pageContext.request.contextPath}/logout">Sign Out</a>
             <button type="button" class="theme-toggle" data-theme-toggle aria-label="Toggle theme"><span data-theme-glyph>&#9790;</span></button>
         </div>
     </header>
@@ -29,10 +30,27 @@
         <%= request.getAttribute("menuMessage") != null ? request.getAttribute("menuMessage") : "" %>
     </div>
 
+    <% if (session.getAttribute("resvTableName") != null) { %>
+        <div class="dine-in-banner">
+            Ordering for <strong>Table <%= session.getAttribute("resvTableName") %></strong> (dine-in). Add items, then check out.
+        </div>
+    <% } %>
+
+    <%
+        List<Item> items = (List<Item>) request.getAttribute("items");
+        boolean hasItems = items != null && !items.isEmpty();
+    %>
+    <% if (hasItems) { %>
+    <div class="menu-search-row">
+        <input type="search" id="menuSearch" class="menu-search-input"
+               placeholder="Search items by name or category..."
+               autocomplete="off" aria-label="Search menu items" />
+    </div>
+    <% } %>
+
     <section class="menu-grid">
         <%
-            List<Item> items = (List<Item>) request.getAttribute("items");
-            if (items == null || items.isEmpty()) {
+            if (!hasItems) {
         %>
             <p class="empty-state">No items are available yet. Please check back soon.</p>
         <%
@@ -47,7 +65,7 @@
                     String imgSrc = remoteImg ? rawImg
                             : ctx + "/" + (hasImg ? rawImg : "assets/images/food-menu-1.png");
         %>
-            <article class="menu-card">
+            <article class="menu-card" data-search="<%= (item.getName() + " " + item.getCategory()).toLowerCase().replace("\"", "&quot;") %>">
                 <img class="menu-thumb" src="<%= imgSrc %>" alt="<%= item.getName() %>" />
                 <div class="menu-card-body">
                     <span class="menu-category"><%= item.getCategory() %></span>
@@ -74,6 +92,37 @@
             }
         %>
     </section>
+
+    <% if (hasItems) { %>
+    <p class="empty-state" id="menuNoResults" hidden>No items match your search.</p>
+    <% } %>
 </div>
+
+<% if (hasItems) { %>
+<script>
+  (function () {
+    var input = document.getElementById('menuSearch');
+    if (!input) return;
+    var cards = Array.prototype.slice.call(document.querySelectorAll('.menu-grid .menu-card'));
+    var noResults = document.getElementById('menuNoResults');
+
+    function applyFilter() {
+      var q = input.value.trim().toLowerCase();
+      var visible = 0;
+      for (var i = 0; i < cards.length; i++) {
+        var hay = cards[i].getAttribute('data-search') || '';
+        var match = q === '' || hay.indexOf(q) !== -1;
+        cards[i].style.display = match ? '' : 'none';
+        if (match) visible++;
+      }
+      if (noResults) noResults.hidden = (visible !== 0);
+    }
+
+    input.addEventListener('input', applyFilter);
+  })();
+</script>
+<% } %>
+
+<%@ include file="chat-widget.jsp" %>
 </body>
 </html>

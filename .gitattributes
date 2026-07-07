@@ -1,0 +1,5 @@
+# Ensure the container entrypoint always has LF endings, even on Windows,
+# so /bin/sh in the Linux image doesn't choke on CRLF.
+*.sh text eol=lf
+entrypoint.sh text eol=lf
+Dockerfile text eol=lf

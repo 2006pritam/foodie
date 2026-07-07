@@ -1,8 +1,12 @@
+# Keep the build context small and avoid shipping local/dev cruft into the image.
 .git
 .gitignore
+.gitattributes
 .claude
 .idea
 .vscode
 node_modules
 **/.DS_Store
 *.log
+Dockerfile
+.dockerignore

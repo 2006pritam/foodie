@@ -15,7 +15,7 @@
   <!-- 
     - custom css link
   -->
-  <link rel="stylesheet" href="./assets/css/style.css?v=5">
+  <link rel="stylesheet" href="./assets/css/style.css?v=10">
   <script src="./assets/js/theme.js"></script>
 
   <!--
@@ -84,7 +84,7 @@
           <ion-icon name="search-outline"></ion-icon>
         </button>
 
-        <a href="#reservation" class="btn btn-hover">Reservation</a>
+        <a href="reservations" class="btn btn-hover">Reservation</a>
 
         <% if (_loggedIn) { %>
           <a href="logout" class="btn btn-hover auth-header-btn">Logout (<%= _sessionUser %>)</a>

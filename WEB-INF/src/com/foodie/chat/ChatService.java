@@ -46,13 +46,10 @@ public final class ChatService {
             try (InputStream is = ChatService.class.getClassLoader().getResourceAsStream("db.properties")) {
                 if (is != null) props.load(is);
             }
-            String envUrl = System.getenv("NVIDIA_API_URL");
-            String envKey = System.getenv("NVIDIA_API_KEY");
-            String envModel = System.getenv("NVIDIA_MODEL");
-
-            url = trimOrNull(envUrl != null ? envUrl : props.getProperty("nvidia.api.url"));
-            key = trimOrNull(envKey != null ? envKey : props.getProperty("nvidia.api.key"));
-            mdl = trimOrNull(envModel != null ? envModel : props.getProperty("nvidia.model"));
+            // Prefer environment variables (Railway / any host); fall back to db.properties.
+            url = firstNonBlank(System.getenv("NVIDIA_API_URL"),  props.getProperty("nvidia.api.url"));
+            key = firstNonBlank(System.getenv("NVIDIA_API_KEY"),  props.getProperty("nvidia.api.key"));
+            mdl = firstNonBlank(System.getenv("NVIDIA_MODEL"),    props.getProperty("nvidia.model"));
         } catch (IOException e) {
             LOGGER.log(Level.SEVERE, "Failed to load chat configuration", e);
         }
@@ -215,6 +212,12 @@ public final class ChatService {
         if (v == null) return null;
         v = v.trim();
         return v.isEmpty() ? null : v;
+    }
+
+    /** Returns the first non-blank of the two values (trimmed), else null. */
+    private static String firstNonBlank(String a, String b) {
+        String ta = trimOrNull(a);
+        return ta != null ? ta : trimOrNull(b);
     }
 
     private static String truncate(String v, int max) {

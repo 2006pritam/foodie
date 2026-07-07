@@ -1,4 +1,5 @@
 #!/bin/sh
+# Bind Tomcat to the port Railway provides (defaults to 8080 locally).
 set -eu
 
 PORT_VALUE="${PORT:-8080}"

@@ -2,7 +2,7 @@
  * Site-wide dark / light theme.
  *
  * Runs synchronously in <head> (no `defer`) so the `data-theme` attribute is
- * set on <html> before the first paint — this avoids a white flash when a
+ * set on <html> before the first paint -- this avoids a white flash when a
  * returning visitor has chosen dark mode.
  *
  * Default is light. The choice is saved in localStorage under "foodie-theme"
@@ -31,7 +31,9 @@
       toggles[i].setAttribute('aria-label', isDark ? 'Switch to light mode' : 'Switch to dark mode');
       toggles[i].setAttribute('title', isDark ? 'Light mode' : 'Dark mode');
       var glyph = toggles[i].querySelector('[data-theme-glyph]');
-      if (glyph) glyph.textContent = isDark ? '☀' : '☾'; // ☀ / ☾
+      // Use Unicode escapes (pure ASCII source bytes) so the glyph renders
+      // correctly regardless of the charset Tomcat serves this .js file with.
+      if (glyph) glyph.textContent = isDark ? '\u2600' : '\u263E'; // sun (U+2600) / moon (U+263E)
     }
   }
 

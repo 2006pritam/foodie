@@ -1,6 +1,5 @@
 package com.foodie.db;
 
-import java.io.IOException;
 import java.io.InputStream;
 import java.sql.Connection;
 import java.sql.DriverManager;
@@ -22,32 +21,35 @@ public final class DatabaseManager {
         try {
             Class.forName("org.postgresql.Driver");
 
+            // Prefer environment variables (Railway / any host); fall back to the
+            // bundled db.properties for local development.
             Properties props = new Properties();
             try (InputStream is = DatabaseManager.class.getClassLoader().getResourceAsStream("db.properties")) {
-                if (is != null) {
-                    props.load(is);
-                }
+                if (is != null) props.load(is);
             }
 
-            String envUrl = System.getenv("DB_URL");
-            String envUsername = System.getenv("DB_USERNAME");
-            String envPassword = System.getenv("DB_PASSWORD");
+            url      = firstNonBlank(System.getenv("DB_URL"),      props.getProperty("db.url"));
+            username = firstNonBlank(System.getenv("DB_USERNAME"), props.getProperty("db.username"));
+            password = firstNonBlank(System.getenv("DB_PASSWORD"), props.getProperty("db.password"));
 
-            url = (envUrl != null && !envUrl.isBlank()) ? envUrl : props.getProperty("db.url");
-            username = (envUsername != null && !envUsername.isBlank()) ? envUsername : props.getProperty("db.username");
-            password = (envPassword != null && !envPassword.isBlank()) ? envPassword : props.getProperty("db.password");
-
-            if (url != null && !url.isBlank() && !url.contains("YOUR_ENDPOINT_HOST") && !url.contains("YOUR_DATABASE_URL")) {
-                ready = true;
-                LOGGER.info("DatabaseManager initialised and ready.");
-            } else {
-                ready = false;
-                LOGGER.warning("DatabaseManager is not ready because database configuration is missing or still uses placeholder values.");
+            if (url == null || url.isEmpty() || url.contains("YOUR_ENDPOINT_HOST")) {
+                throw new IllegalStateException(
+                    "Database URL is not configured. Set DB_URL / DB_USERNAME / DB_PASSWORD env vars or db.properties.");
             }
+
+            ready = true;
+            LOGGER.info("DatabaseManager initialised and ready.");
         } catch (Exception e) {
             ready = false;
             LOGGER.log(Level.SEVERE, "DatabaseManager initialisation failed", e);
         }
+    }
+
+    /** Returns the first argument that is non-null and non-blank, else null. */
+    private static String firstNonBlank(String a, String b) {
+        if (a != null && !a.trim().isEmpty()) return a.trim();
+        if (b != null && !b.trim().isEmpty()) return b.trim();
+        return null;
     }
 
     private DatabaseManager() {}

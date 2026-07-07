@@ -7,7 +7,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Checkout | Foodie</title>
-    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/style.css?v=5">
+    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/style.css?v=10">
     <script src="${pageContext.request.contextPath}/assets/js/theme.js"></script>
 </head>
 <body class="dashboard-page checkout-page">
@@ -19,6 +19,7 @@
         </div>
         <div class="dashboard-actions">
             <a class="button outline" href="${pageContext.request.contextPath}/cart">Back to Cart</a>
+            <a class="button danger" href="${pageContext.request.contextPath}/logout">Sign Out</a>
             <button type="button" class="theme-toggle" data-theme-toggle aria-label="Toggle theme"><span data-theme-glyph>&#9790;</span></button>
         </div>
     </header>
@@ -31,18 +32,24 @@
         List<OrderItem> lines = (List<OrderItem>) request.getAttribute("cartLines");
         Object totalObj = request.getAttribute("cartTotal");
         String ctx = request.getContextPath();
+        String dineInTable = (String) session.getAttribute("resvTableName");
+        boolean dineIn = dineInTable != null;
     %>
 
     <section class="checkout-layout">
         <div class="panel form-panel">
             <div class="panel-header">
-                <h2>Delivery details</h2>
-                <p>Where should we send your order?</p>
+                <h2><%= dineIn ? "Dine-in details" : "Delivery details" %></h2>
+                <p><%= dineIn ? "Your order will be served to your reserved table." : "Where should we send your order?" %></p>
             </div>
+            <% if (dineIn) { %>
+                <div class="dine-in-banner">Serving to <strong>Table <%= dineInTable %></strong> (dine-in).</div>
+            <% } %>
             <form method="post" action="<%= ctx %>/checkout" class="admin-form" id="checkoutForm">
                 <div class="form-row">
-                    <label>Delivery address</label>
-                    <input type="text" name="address" required placeholder="House no, street, area, city" />
+                    <label><%= dineIn ? "Delivery address (optional for dine-in)" : "Delivery address" %></label>
+                    <input type="text" name="address" <%= dineIn ? "" : "required" %>
+                           placeholder="<%= dineIn ? "Table " + dineInTable + " (dine-in)" : "House no, street, area, city" %>" />
                 </div>
                 <div class="form-row">
                     <label>Phone number</label>
@@ -97,5 +104,7 @@
     }
     togglePay();
 </script>
+
+<%@ include file="chat-widget.jsp" %>
 </body>
 </html>

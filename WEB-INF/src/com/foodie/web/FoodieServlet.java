@@ -3,10 +3,14 @@ package com.foodie.web;
 import com.foodie.chat.ChatService;
 import com.foodie.db.ItemDao;
 import com.foodie.db.OrderDao;
+import com.foodie.db.ReservationDao;
+import com.foodie.db.TableDao;
 import com.foodie.db.UserDao;
+import com.foodie.model.DiningTable;
 import com.foodie.model.Item;
 import com.foodie.model.Order;
 import com.foodie.model.OrderItem;
+import com.foodie.model.Reservation;
 import com.foodie.model.User;
 
 import java.io.File;
@@ -56,6 +60,8 @@ public class FoodieServlet extends HttpServlet {
     private final UserDao userDao = new UserDao();
     private final ItemDao itemDao = new ItemDao();
     private final OrderDao orderDao = new OrderDao();
+    private final TableDao tableDao = new TableDao();
+    private final ReservationDao reservationDao = new ReservationDao();
 
     // ---------------------------------------------------------------
     // GET
@@ -65,13 +71,7 @@ public class FoodieServlet extends HttpServlet {
     protected void doGet(HttpServletRequest req, HttpServletResponse res)
             throws ServletException, IOException {
 
-        String servletPath = req.getServletPath();
-        if (servletPath == null || servletPath.isEmpty() || "/".equals(servletPath)) {
-            showHome(req, res, "");
-            return;
-        }
-
-        switch (servletPath) {
+        switch (req.getServletPath()) {
             case "/login":
                 if (req.getSession(false) != null && req.getSession(false).getAttribute("userId") != null) {
                     res.sendRedirect(req.getContextPath() + "/dashboard");
@@ -145,6 +145,29 @@ public class FoodieServlet extends HttpServlet {
                 showUserOrders(req, res);
                 return;
 
+            // Table reservation flow
+            case "/reservations":
+                if (!ensureLoggedInForReservation(req, res)) return;
+                showReservations(req, res);
+                return;
+
+            case "/reservations/my":
+                if (!ensureLoggedIn(req, res)) return;
+                showMyReservations(req, res);
+                return;
+
+            case "/admin/tables":
+                if (!ensureLoggedIn(req, res)) return;
+                if (!authorizeRole(req, res, "ADMIN")) return;
+                showAdminTables(req, res);
+                return;
+
+            case "/admin/reservations":
+                if (!ensureLoggedIn(req, res)) return;
+                if (!authorizeRole(req, res, "ADMIN")) return;
+                showAdminReservations(req, res);
+                return;
+
             default:                 showHome(req, res, "");
         }
     }
@@ -169,7 +192,11 @@ public class FoodieServlet extends HttpServlet {
             case "/rider/orders":    handleRiderOrdersPost(req, res); return;
             case "/cart":            handleCartPost(req, res);        return;
             case "/checkout":        handleCheckoutPost(req, res);    return;
+            case "/orders":          handleUserOrdersPost(req, res);  return;
             case "/chat":            handleChat(req, res);            return;
+            case "/reservations":       handleReservationsPost(req, res);      return;
+            case "/admin/tables":       handleAdminTablesPost(req, res);       return;
+            case "/admin/reservations": handleAdminReservationsPost(req, res); return;
             default:                 handleReservation(req, res);
         }
     }
@@ -225,7 +252,12 @@ public class FoodieServlet extends HttpServlet {
                 session.setAttribute("userRole",  normalizedRole);
                 session.setAttribute("tenantId",   user.getTenantId());
 
-                res.sendRedirect(req.getContextPath() + "/dashboard");
+                // Resume the page the user was bounced from (e.g. Reservation), else the dashboard.
+                Object after = session.getAttribute("afterLogin");
+                session.removeAttribute("afterLogin");
+                String target = (after instanceof String && "USER".equals(normalizedRole))
+                    ? (String) after : "/dashboard";
+                res.sendRedirect(req.getContextPath() + target);
             } else {
                 showAuth(req, res, VIEW_LOGIN, msg("error", "Invalid email or password."));
             }
@@ -441,7 +473,8 @@ public class FoodieServlet extends HttpServlet {
                 showRiderDashboard(req, res);
                 return;
             default:
-                showUserDashboard(req, res);
+                // Customers land straight on the menu instead of the welcome dashboard.
+                res.sendRedirect(req.getContextPath() + "/menu");
         }
     }
 
@@ -815,6 +848,14 @@ public class FoodieServlet extends HttpServlet {
     private void showRiderDashboard(HttpServletRequest req, HttpServletResponse res)
             throws ServletException, IOException {
         HttpSession session = req.getSession(false);
+        // Surface a one-shot flash set by a prior POST (e.g. delivery PIN result).
+        if (session != null) {
+            Object flash = session.getAttribute("riderFlash");
+            if (flash != null) {
+                req.setAttribute("riderMessage", flash);
+                session.removeAttribute("riderFlash");
+            }
+        }
         int riderId = intAttr(session, "userId");
         try {
             req.setAttribute("availableOrders", orderDao.findAvailableForRider());
@@ -876,7 +917,11 @@ public class FoodieServlet extends HttpServlet {
             if (id > 0 && "pickup".equals(action)) {
                 orderDao.claimOrder(id, riderId, riderName);
             } else if (id > 0 && "deliver".equals(action)) {
-                orderDao.markDelivered(id, riderId);
+                String pin = param(req, "pin");
+                boolean delivered = orderDao.markDelivered(id, riderId, pin);
+                session.setAttribute("riderFlash", delivered
+                    ? msg("success", "Delivery confirmed. Order marked as delivered.")
+                    : msg("error", "Incorrect delivery PIN. Ask the customer for the 4-digit PIN and try again."));
             }
         } catch (SQLException e) {
             LOGGER.log(Level.SEVERE, "Rider order action error", e);
@@ -918,7 +963,16 @@ public class FoodieServlet extends HttpServlet {
 
     private void showUserOrders(HttpServletRequest req, HttpServletResponse res)
             throws ServletException, IOException {
-        int userId = intAttr(req.getSession(false), "userId");
+        // Surface a one-shot flash set by a prior POST (e.g. order cancellation).
+        HttpSession session = req.getSession(false);
+        if (session != null) {
+            Object flash = session.getAttribute("orderFlash");
+            if (flash != null) {
+                req.setAttribute("orderMessage", flash);
+                session.removeAttribute("orderFlash");
+            }
+        }
+        int userId = intAttr(session, "userId");
         try {
             req.setAttribute("orders", orderDao.findByUserId(userId));
         } catch (SQLException e) {
@@ -926,6 +980,30 @@ public class FoodieServlet extends HttpServlet {
             req.setAttribute("orderMessage", msg("error", "Unable to load your orders. Please try again."));
         }
         forward(req, res, "/WEB-INF/views/orders.jsp");
+    }
+
+    /** POST /orders – customer actions on their own orders (currently: cancel). */
+    private void handleUserOrdersPost(HttpServletRequest req, HttpServletResponse res)
+            throws ServletException, IOException {
+        if (!ensureLoggedIn(req, res)) return;
+
+        int userId = intAttr(req.getSession(false), "userId");
+        String action = param(req, "action");
+        int orderId = parseIntSafe(param(req, "orderId"), -1);
+
+        if (orderId > 0 && "cancel".equals(action)) {
+            try {
+                boolean cancelled = orderDao.cancelOrder(orderId, userId);
+                req.getSession(true).setAttribute("orderFlash", cancelled
+                    ? msg("success", "Your order was cancelled.")
+                    : msg("error", "This order can no longer be cancelled."));
+            } catch (SQLException e) {
+                LOGGER.log(Level.SEVERE, "Order cancel error", e);
+                req.getSession(true).setAttribute("orderFlash",
+                    msg("error", "A server error occurred while cancelling your order."));
+            }
+        }
+        res.sendRedirect(req.getContextPath() + "/orders");
     }
 
     private void handleCartPost(HttpServletRequest req, HttpServletResponse res)
@@ -977,7 +1055,18 @@ public class FoodieServlet extends HttpServlet {
         String phone   = param(req, "phone");
         String payment = param(req, "payment_method");
 
-        if (blank(address) || blank(phone) || blank(payment)) {
+        // Dine-in context: an order started from a table reservation. The table
+        // stands in for a delivery address, so address isn't required here.
+        int resvTableId      = intAttr(session, "resvTableId");
+        String resvTableName = (String) session.getAttribute("resvTableName");
+        int resvId           = intAttr(session, "resvId");
+        boolean dineIn       = resvTableId > 0 && resvTableName != null;
+        if (dineIn && blank(address)) {
+            address = "Dine-in — Table " + resvTableName;
+        }
+
+        boolean addressOk = dineIn || !blank(address);
+        if (!addressOk || blank(phone) || blank(payment)) {
             req.setAttribute("checkoutMessage", msg("error", "Address, phone and payment method are required."));
             showCheckout(req, res);
             return;
@@ -1004,11 +1093,25 @@ public class FoodieServlet extends HttpServlet {
             order.setPhone(phone);
             order.setPaymentMethod(payment);
             order.setTotal(round2(total));
+            if (dineIn) {
+                order.setTableId(resvTableId);
+                order.setTableName(resvTableName);
+            }
             // Mock payment always succeeds.
 
             int newId = orderDao.createOrder(order, lines);
             if (newId > 0) {
                 cart.clear();
+                if (dineIn) {
+                    // Link the order to its reservation and clear the dine-in context.
+                    if (resvId > 0) {
+                        try { reservationDao.linkOrder(resvId, newId); }
+                        catch (SQLException e) { LOGGER.log(Level.WARNING, "Failed to link order to reservation", e); }
+                    }
+                    session.removeAttribute("resvTableId");
+                    session.removeAttribute("resvTableName");
+                    session.removeAttribute("resvId");
+                }
                 // Land on My Orders with this order's receipt auto-opened for easy printout.
                 String placed = java.net.URLEncoder.encode(order.getOrderCode(), StandardCharsets.UTF_8);
                 res.sendRedirect(req.getContextPath() + "/orders?placed=" + placed);
@@ -1021,6 +1124,315 @@ public class FoodieServlet extends HttpServlet {
             req.setAttribute("checkoutMessage", msg("error", "A server error occurred while placing your order."));
             showCheckout(req, res);
         }
+    }
+
+    // ---------------------------------------------------------------
+    // Table reservation flow
+    // ---------------------------------------------------------------
+
+    /** Like {@link #ensureLoggedIn} but remembers to resume /reservations after login. */
+    private boolean ensureLoggedInForReservation(HttpServletRequest req, HttpServletResponse res)
+            throws IOException {
+        HttpSession session = req.getSession(false);
+        Object userId = session == null ? null : session.getAttribute("userId");
+        if (userId == null) {
+            req.getSession(true).setAttribute("afterLogin", "/reservations");
+            res.sendRedirect(req.getContextPath() + "/login");
+            return false;
+        }
+        return true;
+    }
+
+    /** Customer booking screen: shape grid + per-table status for a chosen date/time window. */
+    private void showReservations(HttpServletRequest req, HttpServletResponse res)
+            throws ServletException, IOException {
+        String date    = param(req, "date");
+        String timeIn  = param(req, "timeIn");
+        String timeOut = param(req, "timeOut");
+        if (blank(date))    date    = java.time.LocalDate.now().toString();
+        if (blank(timeIn))  timeIn  = "18:00";
+        if (blank(timeOut)) timeOut = "20:00";
+
+        HttpSession session = req.getSession(false);
+        Object flash = session == null ? null : session.getAttribute("resvFlash");
+        if (flash != null) { req.setAttribute("reservationMessage", flash); session.removeAttribute("resvFlash"); }
+
+        try {
+            List<DiningTable> tables = tableDao.findAllActive();
+            List<Reservation> active = reservationDao.findActiveByDate(date);
+
+            String today = java.time.LocalDate.now().toString();
+            String now   = java.time.LocalTime.now().toString();   // "HH:mm:ss"
+            String nowHm = now.length() >= 5 ? now.substring(0, 5) : now;
+
+            Map<Integer, String>  statusByTable = new LinkedHashMap<>();
+            Map<Integer, Integer> seatsByTable  = new LinkedHashMap<>();
+            for (DiningTable t : tables) {
+                String status = "FREE";
+                int seats = 0;
+                for (Reservation r : active) {
+                    if (r.getTableId() != t.getId()) continue;
+                    // Overlap with the selected window.
+                    if (r.getTimeIn().compareTo(timeOut) < 0 && r.getTimeOut().compareTo(timeIn) > 0) {
+                        seats = Math.max(seats, r.getPartySize());
+                        boolean occupiedNow = "ACCEPTED".equals(r.getStatus())
+                            && date.equals(today)
+                            && r.getTimeIn().compareTo(nowHm) <= 0 && r.getTimeOut().compareTo(nowHm) > 0;
+                        status = occupiedNow ? "OCCUPIED" : "BOOKED";
+                        if (occupiedNow) break;   // occupied wins
+                    }
+                }
+                statusByTable.put(t.getId(), status);
+                seatsByTable.put(t.getId(), seats);
+            }
+
+            req.setAttribute("tables", tables);
+            req.setAttribute("statusByTable", statusByTable);
+            req.setAttribute("seatsByTable", seatsByTable);
+            req.setAttribute("resvDate", date);
+            req.setAttribute("resvTimeIn", timeIn);
+            req.setAttribute("resvTimeOut", timeOut);
+        } catch (SQLException e) {
+            LOGGER.log(Level.SEVERE, "Failed to load reservation screen", e);
+            req.setAttribute("reservationMessage", msg("error", "Unable to load tables. Please try again."));
+        }
+        forward(req, res, "/WEB-INF/views/reservations.jsp");
+    }
+
+    private void showMyReservations(HttpServletRequest req, HttpServletResponse res)
+            throws ServletException, IOException {
+        HttpSession session = req.getSession(false);
+        Object flash = session == null ? null : session.getAttribute("resvFlash");
+        if (flash != null) { req.setAttribute("reservationMessage", flash); session.removeAttribute("resvFlash"); }
+        int userId = intAttr(session, "userId");
+        try {
+            req.setAttribute("reservations", reservationDao.findByUserId(userId));
+        } catch (SQLException e) {
+            LOGGER.log(Level.SEVERE, "Failed to load user reservations", e);
+            req.setAttribute("reservationMessage", msg("error", "Unable to load your reservations. Please try again."));
+        }
+        forward(req, res, "/WEB-INF/views/my-reservations.jsp");
+    }
+
+    /** POST /reservations – create a booking (optionally continuing to food ordering) or cancel one. */
+    private void handleReservationsPost(HttpServletRequest req, HttpServletResponse res)
+            throws ServletException, IOException {
+        if (!ensureLoggedIn(req, res)) return;
+
+        HttpSession session = req.getSession(true);
+        int userId = intAttr(session, "userId");
+        String action = param(req, "action");
+
+        if ("cancel".equals(action)) {
+            int id = parseIntSafe(param(req, "id"), -1);
+            try {
+                if (id > 0) reservationDao.cancel(id, userId);
+                session.setAttribute("resvFlash", msg("success", "Reservation cancelled."));
+            } catch (SQLException e) {
+                LOGGER.log(Level.SEVERE, "Reservation cancel error", e);
+                session.setAttribute("resvFlash", msg("error", "Could not cancel the reservation."));
+            }
+            res.sendRedirect(req.getContextPath() + "/reservations/my");
+            return;
+        }
+
+        // action = create
+        int tableId    = parseIntSafe(param(req, "tableId"), -1);
+        String date    = param(req, "date");
+        String timeIn  = param(req, "timeIn");
+        String timeOut = param(req, "timeOut");
+        int partySize  = parseIntSafe(param(req, "partySize"), 0);
+        String purpose = param(req, "purpose");
+        boolean withFood = "1".equals(param(req, "withFood"));
+
+        if (tableId <= 0 || blank(date) || blank(timeIn) || blank(timeOut) || partySize <= 0) {
+            session.setAttribute("resvFlash", msg("error", "Please choose a table, date, time and party size."));
+            res.sendRedirect(req.getContextPath() + "/reservations?date=" + urlenc(date));
+            return;
+        }
+        if (timeIn.compareTo(timeOut) >= 0) {
+            session.setAttribute("resvFlash", msg("error", "Time-out must be after time-in."));
+            res.sendRedirect(req.getContextPath() + "/reservations?date=" + urlenc(date));
+            return;
+        }
+
+        try {
+            DiningTable table = tableDao.findById(tableId);
+            if (table == null || !table.isActive()) {
+                session.setAttribute("resvFlash", msg("error", "That table is not available."));
+                res.sendRedirect(req.getContextPath() + "/reservations?date=" + urlenc(date));
+                return;
+            }
+            if (partySize > table.getCapacity()) {
+                session.setAttribute("resvFlash",
+                    msg("error", "Party size exceeds the table capacity (" + table.getCapacity() + ")."));
+                res.sendRedirect(req.getContextPath() + "/reservations?date=" + urlenc(date));
+                return;
+            }
+            if (!reservationDao.isTableAvailable(tableId, date, timeIn, timeOut)) {
+                session.setAttribute("resvFlash",
+                    msg("error", "Sorry, that table was just booked for this time. Pick another."));
+                res.sendRedirect(req.getContextPath() + "/reservations?date=" + urlenc(date));
+                return;
+            }
+
+            Reservation r = new Reservation();
+            r.setReservationCode("RSV" + System.currentTimeMillis());
+            r.setUserId(userId);
+            r.setCustomerName(String.valueOf(session.getAttribute("userName")));
+            r.setTableId(tableId);
+            r.setTableName(table.getTableName());
+            r.setReserveDate(date);
+            r.setTimeIn(timeIn);
+            r.setTimeOut(timeOut);
+            r.setPartySize(partySize);
+            r.setPurpose(purpose);
+
+            int newId = reservationDao.create(r);
+            if (newId <= 0) {
+                session.setAttribute("resvFlash", msg("error", "Could not create the reservation. Please try again."));
+                res.sendRedirect(req.getContextPath() + "/reservations?date=" + urlenc(date));
+                return;
+            }
+
+            if (withFood) {
+                // Carry the table context into the food-ordering flow.
+                session.setAttribute("resvId", newId);
+                session.setAttribute("resvTableId", tableId);
+                session.setAttribute("resvTableName", table.getTableName());
+                session.setAttribute("resvFlash",
+                    msg("success", "Table " + table.getTableName() + " reserved. Now add food to your order."));
+                res.sendRedirect(req.getContextPath() + "/menu");
+            } else {
+                session.setAttribute("resvFlash",
+                    msg("success", "Table " + table.getTableName() + " reserved. Awaiting confirmation."));
+                res.sendRedirect(req.getContextPath() + "/reservations/my");
+            }
+        } catch (SQLException e) {
+            LOGGER.log(Level.SEVERE, "Reservation create error", e);
+            session.setAttribute("resvFlash", msg("error", "A server error occurred. Please try again."));
+            res.sendRedirect(req.getContextPath() + "/reservations?date=" + urlenc(date));
+        }
+    }
+
+    // ---------------------------------------------------------------
+    // Admin: table catalog + reservation approvals
+    // ---------------------------------------------------------------
+
+    private void showAdminTables(HttpServletRequest req, HttpServletResponse res)
+            throws ServletException, IOException {
+        try {
+            req.setAttribute("tables", tableDao.findAll());
+        } catch (SQLException e) {
+            LOGGER.log(Level.SEVERE, "Failed to load admin tables", e);
+            req.setAttribute("adminTableMessage", msg("error", "Unable to load tables. Please try again."));
+        }
+        forward(req, res, "/WEB-INF/views/admin/tables.jsp");
+    }
+
+    private void handleAdminTablesPost(HttpServletRequest req, HttpServletResponse res)
+            throws ServletException, IOException {
+        if (!authorizeRole(req, res, "ADMIN")) return;
+
+        String action = param(req, "action");
+        String message;
+        try {
+            switch (action) {
+                case "create": message = createAdminTable(req); break;
+                case "update": message = updateAdminTable(req); break;
+                case "delete": message = deleteAdminTable(req); break;
+                default:       message = "Unknown table action.";
+            }
+        } catch (SQLException e) {
+            LOGGER.log(Level.SEVERE, "Admin table CRUD error", e);
+            message = "A server error occurred while updating tables.";
+        }
+        req.setAttribute("adminTableMessage", msg("success", message));
+        showAdminTables(req, res);
+    }
+
+    private String createAdminTable(HttpServletRequest req) throws SQLException {
+        String name  = param(req, "table_name");
+        String shape = normalizeShape(param(req, "shape"));
+        String floor = normalizeFloor(param(req, "floor"));
+        String zone  = param(req, "zone");
+        int capacity = parseIntSafe(param(req, "capacity"), 0);
+        if (blank(name) || capacity <= 0) {
+            return "Table name and a capacity of at least 1 are required.";
+        }
+        boolean created = tableDao.createTable(name, shape, capacity, floor, zone);
+        return created ? "Table added successfully." : "Could not add table.";
+    }
+
+    private String updateAdminTable(HttpServletRequest req) throws SQLException {
+        int id = parseIntSafe(param(req, "id"), -1);
+        String name  = param(req, "table_name");
+        String shape = normalizeShape(param(req, "shape"));
+        String floor = normalizeFloor(param(req, "floor"));
+        String zone  = param(req, "zone");
+        int capacity = parseIntSafe(param(req, "capacity"), 0);
+        boolean active = "on".equalsIgnoreCase(param(req, "active")) || "true".equalsIgnoreCase(param(req, "active"));
+        if (id <= 0 || blank(name) || capacity <= 0) {
+            return "Valid table id, name and capacity are required.";
+        }
+        boolean updated = tableDao.updateTable(id, name, shape, capacity, floor, zone, active);
+        return updated ? "Table updated successfully." : "Could not update table.";
+    }
+
+    private String deleteAdminTable(HttpServletRequest req) throws SQLException {
+        int id = parseIntSafe(param(req, "id"), -1);
+        if (id <= 0) return "Valid table id is required to delete a table.";
+        boolean deleted = tableDao.deleteById(id);
+        return deleted ? "Table deleted successfully." : "Could not delete table.";
+    }
+
+    private void showAdminReservations(HttpServletRequest req, HttpServletResponse res)
+            throws ServletException, IOException {
+        try {
+            req.setAttribute("reservations", reservationDao.findAll());
+        } catch (SQLException e) {
+            LOGGER.log(Level.SEVERE, "Failed to load admin reservations", e);
+            req.setAttribute("adminReservationMessage", msg("error", "Unable to load reservations. Please try again."));
+        }
+        forward(req, res, "/WEB-INF/views/admin/reservations.jsp");
+    }
+
+    private void handleAdminReservationsPost(HttpServletRequest req, HttpServletResponse res)
+            throws ServletException, IOException {
+        if (!authorizeRole(req, res, "ADMIN")) return;
+
+        String action = param(req, "action");
+        int id = parseIntSafe(param(req, "id"), -1);
+        try {
+            if (id > 0 && "accept".equals(action)) {
+                reservationDao.updateStatus(id, ReservationDao.ACCEPTED);
+            } else if (id > 0 && "reject".equals(action)) {
+                reservationDao.updateStatus(id, ReservationDao.REJECTED);
+            }
+        } catch (SQLException e) {
+            LOGGER.log(Level.SEVERE, "Admin reservation status error", e);
+        }
+        res.sendRedirect(req.getContextPath() + "/admin/reservations");
+    }
+
+    private static String normalizeShape(String s) {
+        String v = s == null ? "" : s.trim().toUpperCase();
+        switch (v) {
+            case "SQUARE": case "RECTANGLE": case "CIRCLE": case "FAMILY": return v;
+            default: return "SQUARE";
+        }
+    }
+
+    private static String normalizeFloor(String s) {
+        String v = s == null ? "" : s.trim().toUpperCase();
+        switch (v) {
+            case "GROUND": case "FIRST": case "SECOND": case "ROOF": return v;
+            default: return "GROUND";
+        }
+    }
+
+    private static String urlenc(String v) {
+        return java.net.URLEncoder.encode(v == null ? "" : v, StandardCharsets.UTF_8);
     }
 
     // ---------------------------------------------------------------

@@ -16,6 +16,9 @@ public class Order {
     private String status;
     private Integer riderId;      // null until a rider claims the order
     private String riderName;
+    private String deliveryPin;   // 4-digit PIN assigned when the admin accepts the order
+    private int tableId;          // 0 when the order is not tied to a table reservation
+    private String tableName;     // dine-in table name/number shown on the bill (null for delivery)
     private String createdAt;
     private List<OrderItem> items = new ArrayList<>();
 
@@ -115,6 +118,30 @@ public class Order {
 
     public void setRiderName(String riderName) {
         this.riderName = riderName;
+    }
+
+    public String getDeliveryPin() {
+        return deliveryPin;
+    }
+
+    public void setDeliveryPin(String deliveryPin) {
+        this.deliveryPin = deliveryPin;
+    }
+
+    public int getTableId() {
+        return tableId;
+    }
+
+    public void setTableId(int tableId) {
+        this.tableId = tableId;
+    }
+
+    public String getTableName() {
+        return tableName;
+    }
+
+    public void setTableName(String tableName) {
+        this.tableName = tableName;
     }
 
     public String getCreatedAt() {

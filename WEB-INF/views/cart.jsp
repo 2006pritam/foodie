@@ -7,7 +7,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Your Cart | Foodie</title>
-    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/style.css?v=5">
+    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/style.css?v=10">
     <script src="${pageContext.request.contextPath}/assets/js/theme.js"></script>
 </head>
 <body class="dashboard-page cart-page">
@@ -19,7 +19,7 @@
         </div>
         <div class="dashboard-actions">
             <a class="button outline" href="${pageContext.request.contextPath}/menu">Back to Menu</a>
-            <a class="button" href="${pageContext.request.contextPath}/dashboard">Dashboard</a>
+            <a class="button danger" href="${pageContext.request.contextPath}/logout">Sign Out</a>
             <button type="button" class="theme-toggle" data-theme-toggle aria-label="Toggle theme"><span data-theme-glyph>&#9790;</span></button>
         </div>
     </header>
@@ -93,5 +93,7 @@
         </section>
     <% } %>
 </div>
+
+<%@ include file="chat-widget.jsp" %>
 </body>
 </html>

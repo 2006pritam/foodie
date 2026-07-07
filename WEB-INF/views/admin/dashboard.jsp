@@ -15,7 +15,7 @@
 <head>
     <meta charset="UTF-8">
     <title>Admin Dashboard | Foodie SaaS</title>
-    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/style.css?v=5">
+    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/style.css?v=10">
     <script src="${pageContext.request.contextPath}/assets/js/theme.js"></script>
 </head>
 <body class="dashboard-page admin-dashboard">
@@ -30,6 +30,8 @@
             <a class="sidebar-link active" href="#">Dashboard</a>
             <a class="sidebar-link" href="${pageContext.request.contextPath}/admin/items">Manage Items</a>
             <a class="sidebar-link" href="${pageContext.request.contextPath}/admin/orders">Orders</a>
+            <a class="sidebar-link" href="${pageContext.request.contextPath}/admin/tables">Manage Tables</a>
+            <a class="sidebar-link" href="${pageContext.request.contextPath}/admin/reservations">Reservations</a>
             <a class="sidebar-link" href="${pageContext.request.contextPath}/admin/users">Manage Users</a>
         </nav>
 

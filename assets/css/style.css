@@ -650,6 +650,15 @@ body.active { overflow: hidden; }
   color: var(--sonic-silver);
 }
 
+/* Keep inline links flowing with their sentence. The global reset sets
+   `a { display: block; }`, which otherwise drops the text after a link
+   ("Browse the menu" | "and add items to your cart.") onto a new line. */
+.dashboard-list a {
+  display: inline;
+  color: inherit;
+  text-decoration: underline;
+}
+
 .admin-dashboard {
   background-color: #080b12;
   color: #e6ebf4;
@@ -2627,6 +2636,7 @@ textarea.input-field {
 .order-badge.accepted   { background: rgba(52, 211, 153, 0.14);  color: #34d399; }
 .order-badge.picked_up  { background: rgba(167, 139, 250, 0.16); color: #a78bfa; }
 .order-badge.rejected   { background: rgba(251, 113, 133, 0.16); color: #fb7185; }
+.order-badge.cancelled  { background: rgba(148, 163, 184, 0.18); color: #94a3b8; }
 
 /* On the light pages (everything except the dark admin dashboard) use darker,
    higher-contrast badge text so it stays readable on white panels. */
@@ -2635,6 +2645,7 @@ textarea.input-field {
 .dashboard-page:not(.admin-dashboard) .order-badge.picked_up { background: rgba(124, 58, 237, 0.12);  color: #6d28d9; }
 .dashboard-page:not(.admin-dashboard) .order-badge.delivered { background: rgba(3, 105, 161, 0.12);   color: #0369a1; }
 .dashboard-page:not(.admin-dashboard) .order-badge.rejected  { background: rgba(220, 38, 38, 0.12);   color: #dc2626; }
+.dashboard-page:not(.admin-dashboard) .order-badge.cancelled { background: rgba(100, 116, 139, 0.14); color: #475569; }
 
 .empty-state {
   padding: 24px;
@@ -2644,6 +2655,31 @@ textarea.input-field {
 .empty-state a { color: var(--deep-saffron); font-weight: 600; }
 
 .muted { color: var(--spanish-gray); }
+
+/* Menu search */
+.menu-search-row {
+  margin-bottom: 20px;
+}
+.menu-search-input {
+  width: 100%;
+  max-width: 480px;
+  padding: 12px 18px;
+  font-size: 1.5rem;
+  border-radius: 14px;
+  border: 1px solid var(--gainsboro);
+  background-color: var(--white);
+  color: var(--rich-black-fogra-29);
+  box-shadow: var(--shadow-1);
+}
+.menu-search-input:focus {
+  outline: none;
+  border-color: var(--deep-saffron);
+}
+html[data-theme="dark"] .menu-search-input {
+  background-color: #0f141c;
+  border-color: #2b3546;
+  color: #e8edf5;
+}
 
 /* Menu grid */
 .menu-grid {
@@ -2740,6 +2776,232 @@ textarea.input-field {
 .order-card-footer strong { color: var(--rich-black-fogra-29); }
 .order-total strong { color: var(--deep-saffron); }
 .order-rejected-note { color: #dc2626; font-weight: 600; }
+.order-cancel-form { display: inline-flex; margin: 0; }
+
+/* Customer-facing delivery PIN */
+.delivery-pin-box {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 6px 14px;
+  margin: 14px 0;
+  padding: 14px 18px;
+  border-radius: 14px;
+  background: rgba(255, 152, 0, 0.10);
+  border: 1px dashed var(--deep-saffron);
+}
+.delivery-pin-label {
+  font-size: 1.2rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--spanish-gray);
+}
+.delivery-pin-code {
+  font-size: 2.6rem;
+  font-weight: 700;
+  letter-spacing: 0.3em;
+  color: var(--deep-saffron);
+  font-variant-numeric: tabular-nums;
+}
+.delivery-pin-hint {
+  flex-basis: 100%;
+  font-size: 1.3rem;
+  color: var(--spanish-gray);
+}
+
+/* Rider delivery-PIN modal */
+.pin-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  background: rgba(15, 23, 42, 0.55);
+}
+.pin-overlay[hidden] { display: none; }
+.pin-modal {
+  position: relative;
+  width: 100%;
+  max-width: 360px;
+  padding: 28px 26px;
+  border-radius: 20px;
+  background: var(--white);
+  box-shadow: var(--shadow-2);
+  text-align: center;
+}
+.pin-modal h2 { margin: 0 0 6px; }
+.pin-sub { color: var(--spanish-gray); margin-bottom: 18px; }
+.pin-close {
+  position: absolute;
+  top: 10px;
+  right: 14px;
+  font-size: 2.4rem;
+  line-height: 1;
+  border: none;
+  background: none;
+  cursor: pointer;
+  color: var(--spanish-gray);
+}
+.pin-input {
+  width: 100%;
+  margin-bottom: 16px;
+  padding: 12px;
+  font-size: 2.8rem;
+  text-align: center;
+  letter-spacing: 0.5em;
+  font-variant-numeric: tabular-nums;
+  border-radius: 12px;
+  border: 1px solid var(--gainsboro);
+  background: var(--white);
+  color: var(--rich-black-fogra-29);
+}
+.pin-input:focus { outline: none; border-color: var(--deep-saffron); }
+html[data-theme="dark"] .pin-modal { background: #131a24; color: #e8edf5; }
+html[data-theme="dark"] .pin-input {
+  background: #0f141c;
+  border-color: #2b3546;
+  color: #e8edf5;
+}
+
+/* ===================== Table reservation ===================== */
+
+/* Dine-in context banner (menu + checkout) */
+.dine-in-banner {
+  margin: 0 0 18px;
+  padding: 12px 18px;
+  border-radius: 14px;
+  background: rgba(255, 152, 0, 0.12);
+  border: 1px solid var(--deep-saffron);
+  color: var(--rich-black-fogra-29);
+}
+html[data-theme="dark"] .dine-in-banner { color: #e8edf5; }
+
+/* Date / time window selector */
+.resv-filter {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 14px;
+  margin-bottom: 18px;
+  padding: 16px 18px;
+  border-radius: 16px;
+  background-color: var(--white);
+  border: 1px solid var(--gainsboro);
+  box-shadow: var(--shadow-1);
+}
+.resv-filter-field { display: flex; flex-direction: column; gap: 6px; }
+.resv-filter-field label { font-size: 1.3rem; color: var(--spanish-gray); }
+.resv-filter input {
+  padding: 10px 12px;
+  border-radius: 12px;
+  border: 1px solid var(--gainsboro);
+  background-color: var(--white);
+  color: var(--rich-black-fogra-29);
+  font-size: 1.5rem;
+}
+html[data-theme="dark"] .resv-filter { background-color: #131a24; border-color: #2b3546; }
+html[data-theme="dark"] .resv-filter input { background-color: #0f141c; border-color: #2b3546; color: #e8edf5; }
+
+/* Legend */
+.resv-legend { display: flex; gap: 20px; margin-bottom: 16px; color: var(--spanish-gray); font-size: 1.4rem; }
+.resv-legend .dot { display: inline-block; width: 12px; height: 12px; border-radius: 50%; margin-right: 6px; vertical-align: middle; }
+.dot.free { background: #10b981; }
+.dot.booked { background: #3b82f6; }
+.dot.occupied { background: #f59e0b; }
+
+/* Floor tabs */
+.floor-tabs { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 20px; }
+.floor-tab {
+  padding: 8px 18px;
+  border-radius: 999px;
+  border: 1px solid var(--gainsboro);
+  background: var(--white);
+  color: var(--rich-black-fogra-29);
+  cursor: pointer;
+  font-size: 1.4rem;
+}
+.floor-tab.active { background: var(--deep-saffron); border-color: var(--deep-saffron); color: #fff; }
+html[data-theme="dark"] .floor-tab { background: #131a24; border-color: #2b3546; color: #e8edf5; }
+html[data-theme="dark"] .floor-tab.active { background: var(--deep-saffron); color: #1a1207; }
+
+/* Floor plan grid of tables */
+.floor-plan {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 22px;
+}
+.rtable-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  padding: 20px 16px;
+  border-radius: 18px;
+  background-color: var(--white);
+  border: 1px solid var(--gainsboro);
+  box-shadow: var(--shadow-1);
+}
+html[data-theme="dark"] .rtable-card { background-color: #131a24; border-color: #2b3546; }
+
+/* The table shape itself, with chairs drawn as pseudo-elements around it. */
+.rtable {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 92px;
+  height: 92px;
+  margin: 14px;
+  color: #fff;
+  font-weight: 700;
+  background: #10b981;               /* FREE */
+}
+.rtable.booked { background: #3b82f6; }
+.rtable.occupied { background: #f59e0b; }
+.rtable.square { border-radius: 14px; }
+.rtable.rectangle { width: 128px; height: 78px; border-radius: 14px; }
+.rtable.circle { border-radius: 50%; }
+.rtable.family { width: 138px; height: 92px; border-radius: 20px; }
+.rtable-name { font-size: 1.6rem; }
+/* Chair hints: a soft ring around the table edge suggesting seating. */
+.rtable::before {
+  content: "";
+  position: absolute;
+  inset: -12px;
+  border: 3px dotted rgba(0, 0, 0, 0.18);
+  border-radius: inherit;
+  pointer-events: none;
+}
+html[data-theme="dark"] .rtable::before { border-color: rgba(255, 255, 255, 0.22); }
+
+.rtable-meta { display: flex; flex-direction: column; align-items: center; gap: 2px; text-align: center; }
+.rtable-status { font-weight: 700; font-size: 1.4rem; }
+.rtable-status.free { color: #059669; }
+.rtable-status.booked { color: #2563eb; }
+.rtable-status.occupied { color: #d97706; }
+.rtable-seats { font-size: 1.3rem; color: var(--spanish-gray); }
+.rtable-zone {
+  font-size: 1.1rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--deep-saffron);
+}
+
+/* Reserve modal reuses the .pin-overlay / .pin-modal shell */
+.resv-modal { max-width: 400px; text-align: left; }
+.resv-modal .form-row { display: flex; flex-direction: column; gap: 6px; margin-bottom: 14px; }
+.resv-modal .form-row input {
+  padding: 10px 12px;
+  border-radius: 12px;
+  border: 1px solid var(--gainsboro);
+  background: var(--white);
+  color: var(--rich-black-fogra-29);
+  font-size: 1.5rem;
+}
+html[data-theme="dark"] .resv-modal .form-row input { background: #0f141c; border-color: #2b3546; color: #e8edf5; }
+.resv-modal-actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 6px; }
 
 /* Status timeline */
 .status-timeline {
