@@ -1272,7 +1272,7 @@
     <div class="footer-bottom">
       <div class="container">
         <p class="copyright-text">
-          &copy; 2022 <a href="#" class="copyright-link">codewithsadee</a> All Rights Reserved.
+          &copy; 2025 All Rights Reserved by <a href="#" class="copyright-link">Pritam Kumar Modak, Roni Ghosh, Soumi Pal</a>.
         </p>
       </div>
     </div>
