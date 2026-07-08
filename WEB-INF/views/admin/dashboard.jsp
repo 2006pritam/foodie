@@ -20,7 +20,7 @@
 <head>
     <meta charset="UTF-8">
     <title>Admin Dashboard | Foodie SaaS</title>
-    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/style.css?v=13">
+    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/style.css?v=14">
     <script src="${pageContext.request.contextPath}/assets/js/theme.js"></script>
 </head>
 <body class="dashboard-page admin-dashboard">
@@ -37,6 +37,7 @@
             <a class="sidebar-link" href="${pageContext.request.contextPath}/admin/orders">Orders</a>
             <a class="sidebar-link" href="${pageContext.request.contextPath}/admin/tables">Manage Tables</a>
             <a class="sidebar-link" href="${pageContext.request.contextPath}/admin/reservations">Reservations</a>
+            <a class="sidebar-link" href="${pageContext.request.contextPath}/admin/complaints">Complaints</a>
             <a class="sidebar-link" href="${pageContext.request.contextPath}/admin/users">Manage Users</a>
         </nav>
 
@@ -87,6 +88,11 @@
                 <span class="metric-label">Feedback</span>
                 <strong><%= num(request.getAttribute("feedbackCount")) %></strong>
                 <small>Messages received</small>
+            </article>
+            <article class="metric-card accent-red">
+                <span class="metric-label">Open Complaints</span>
+                <strong><%= num(request.getAttribute("openComplaints")) %></strong>
+                <small><a href="${pageContext.request.contextPath}/admin/complaints">View all</a></small>
             </article>
         </section>
 

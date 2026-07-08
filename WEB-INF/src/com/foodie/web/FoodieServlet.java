@@ -1,12 +1,14 @@
 package com.foodie.web;
 
 import com.foodie.chat.ChatService;
+import com.foodie.db.ComplaintDao;
 import com.foodie.db.FeedbackDao;
 import com.foodie.db.ItemDao;
 import com.foodie.db.OrderDao;
 import com.foodie.db.ReservationDao;
 import com.foodie.db.TableDao;
 import com.foodie.db.UserDao;
+import com.foodie.model.Complaint;
 import com.foodie.model.DiningTable;
 import com.foodie.model.Item;
 import com.foodie.model.Order;
@@ -64,6 +66,7 @@ public class FoodieServlet extends HttpServlet {
     private final TableDao tableDao = new TableDao();
     private final ReservationDao reservationDao = new ReservationDao();
     private final FeedbackDao feedbackDao = new FeedbackDao();
+    private final ComplaintDao complaintDao = new ComplaintDao();
 
     // ---------------------------------------------------------------
     // GET
@@ -158,6 +161,18 @@ public class FoodieServlet extends HttpServlet {
                 showMyReservations(req, res);
                 return;
 
+            // Customer complaints
+            case "/complaints":
+                if (!ensureLoggedIn(req, res)) return;
+                showComplaints(req, res);
+                return;
+
+            case "/admin/complaints":
+                if (!ensureLoggedIn(req, res)) return;
+                if (!authorizeRole(req, res, "ADMIN")) return;
+                showAdminComplaints(req, res);
+                return;
+
             case "/admin/tables":
                 if (!ensureLoggedIn(req, res)) return;
                 if (!authorizeRole(req, res, "ADMIN")) return;
@@ -199,6 +214,8 @@ public class FoodieServlet extends HttpServlet {
             case "/reservations":       handleReservationsPost(req, res);      return;
             case "/admin/tables":       handleAdminTablesPost(req, res);       return;
             case "/admin/reservations": handleAdminReservationsPost(req, res); return;
+            case "/complaints":         handleComplaintsPost(req, res);        return;
+            case "/admin/complaints":   handleAdminComplaintsPost(req, res);   return;
             default:                 handleFeedback(req, res);
         }
     }
@@ -832,6 +849,7 @@ public class FoodieServlet extends HttpServlet {
             req.setAttribute("recentOrders",   all.subList(0, Math.min(5, all.size())));
             req.setAttribute("feedbackCount",  feedbackDao.countAll());
             req.setAttribute("recentFeedback", feedbackDao.findRecent(8));
+            req.setAttribute("openComplaints", complaintDao.countByStatus(ComplaintDao.OPEN));
         } catch (SQLException e) {
             LOGGER.log(Level.SEVERE, "Failed to load admin dashboard metrics", e);
         }
@@ -1406,6 +1424,97 @@ public class FoodieServlet extends HttpServlet {
             LOGGER.log(Level.SEVERE, "Admin reservation status error", e);
         }
         res.sendRedirect(req.getContextPath() + "/admin/reservations");
+    }
+
+    // ---------------------------------------------------------------
+    // Customer complaints
+    // ---------------------------------------------------------------
+
+    /** Customer "raise a complaint" screen: their orders to pick from + their complaints. */
+    private void showComplaints(HttpServletRequest req, HttpServletResponse res)
+            throws ServletException, IOException {
+        HttpSession session = req.getSession(false);
+        Object flash = session == null ? null : session.getAttribute("complaintFlash");
+        if (flash != null) { req.setAttribute("complaintMessage", flash); session.removeAttribute("complaintFlash"); }
+
+        int userId = intAttr(session, "userId");
+        try {
+            req.setAttribute("orders", orderDao.findByUserId(userId));
+            req.setAttribute("complaints", complaintDao.findByUserId(userId));
+        } catch (SQLException e) {
+            LOGGER.log(Level.SEVERE, "Failed to load complaints screen", e);
+            req.setAttribute("complaintMessage", msg("error", "Unable to load your complaints. Please try again."));
+        }
+        forward(req, res, "/WEB-INF/views/complaints.jsp");
+    }
+
+    /** POST /complaints – customer raises a complaint against one of their own orders. */
+    private void handleComplaintsPost(HttpServletRequest req, HttpServletResponse res)
+            throws ServletException, IOException {
+        if (!ensureLoggedIn(req, res)) return;
+
+        HttpSession session = req.getSession(true);
+        int userId = intAttr(session, "userId");
+        int orderId = parseIntSafe(param(req, "orderId"), -1);
+        String message = param(req, "message");
+
+        if (orderId <= 0 || blank(message)) {
+            session.setAttribute("complaintFlash", msg("error", "Please choose an order and describe the problem."));
+            res.sendRedirect(req.getContextPath() + "/complaints");
+            return;
+        }
+
+        try {
+            // Verify the order belongs to this user before accepting the complaint.
+            Order order = orderDao.findById(orderId);
+            if (order == null || order.getUserId() != userId) {
+                session.setAttribute("complaintFlash", msg("error", "That order was not found in your account."));
+                res.sendRedirect(req.getContextPath() + "/complaints");
+                return;
+            }
+
+            Complaint c = new Complaint();
+            c.setComplaintCode("CMP" + System.currentTimeMillis());
+            c.setUserId(userId);
+            c.setCustomerName(String.valueOf(session.getAttribute("userName")));
+            c.setOrderId(orderId);
+            c.setOrderCode(order.getOrderCode());
+            c.setMessage(message);
+            complaintDao.create(c);
+
+            session.setAttribute("complaintFlash",
+                msg("success", "Your complaint about order " + order.getOrderCode() + " has been submitted."));
+        } catch (SQLException e) {
+            LOGGER.log(Level.SEVERE, "Failed to save complaint", e);
+            session.setAttribute("complaintFlash", msg("error", "A server error occurred. Please try again."));
+        }
+        res.sendRedirect(req.getContextPath() + "/complaints");
+    }
+
+    private void showAdminComplaints(HttpServletRequest req, HttpServletResponse res)
+            throws ServletException, IOException {
+        try {
+            req.setAttribute("complaints", complaintDao.findAll());
+        } catch (SQLException e) {
+            LOGGER.log(Level.SEVERE, "Failed to load admin complaints", e);
+            req.setAttribute("adminComplaintMessage", msg("error", "Unable to load complaints. Please try again."));
+        }
+        forward(req, res, "/WEB-INF/views/admin/complaints.jsp");
+    }
+
+    private void handleAdminComplaintsPost(HttpServletRequest req, HttpServletResponse res)
+            throws ServletException, IOException {
+        if (!authorizeRole(req, res, "ADMIN")) return;
+
+        int id = parseIntSafe(param(req, "id"), -1);
+        try {
+            if (id > 0 && "resolve".equals(param(req, "action"))) {
+                complaintDao.resolve(id);
+            }
+        } catch (SQLException e) {
+            LOGGER.log(Level.SEVERE, "Admin complaint resolve error", e);
+        }
+        res.sendRedirect(req.getContextPath() + "/admin/complaints");
     }
 
     private static String normalizeShape(String s) {

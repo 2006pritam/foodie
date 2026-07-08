@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Your Dashboard - Foodie</title>
-  <link rel="stylesheet" href="./assets/css/style.css?v=13">
+  <link rel="stylesheet" href="./assets/css/style.css?v=14">
   <script src="./assets/js/theme.js"></script>
 </head>
 <body class="dashboard-page">
@@ -29,6 +29,7 @@
         <a class="button outline" href="cart">My Cart</a>
         <a class="button outline" href="orders">My Orders</a>
         <a class="button outline" href="reservations">Table Booking</a>
+        <a class="button outline" href="complaints">Raise Complaint</a>
       <% } %>
       <a class="button danger" href="logout">Sign Out</a>
       <button type="button" class="theme-toggle" data-theme-toggle aria-label="Toggle theme"><span data-theme-glyph>&#9790;</span></button>

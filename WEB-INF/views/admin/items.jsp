@@ -6,7 +6,7 @@
 <head>
     <meta charset="UTF-8">
     <title>Manage Items | Foodie Admin</title>
-    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/style.css?v=13">
+    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/style.css?v=14">
     <script src="${pageContext.request.contextPath}/assets/js/theme.js"></script>
 </head>
 <body class="dashboard-page admin-items-page">

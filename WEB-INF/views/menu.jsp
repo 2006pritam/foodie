@@ -7,7 +7,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Menu | Foodie</title>
-    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/style.css?v=13">
+    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/style.css?v=14">
     <script src="${pageContext.request.contextPath}/assets/js/theme.js"></script>
 </head>
 <body class="dashboard-page menu-page">
@@ -21,6 +21,7 @@
             <a class="button outline" href="${pageContext.request.contextPath}/cart">Cart (<%= request.getAttribute("cartCount") != null ? request.getAttribute("cartCount") : 0 %>)</a>
             <a class="button outline" href="${pageContext.request.contextPath}/orders">My Orders</a>
             <a class="button outline" href="${pageContext.request.contextPath}/reservations">Table Booking</a>
+            <a class="button outline" href="${pageContext.request.contextPath}/complaints">Raise Complaint</a>
             <a class="button danger" href="${pageContext.request.contextPath}/logout">Sign Out</a>
             <button type="button" class="theme-toggle" data-theme-toggle aria-label="Toggle theme"><span data-theme-glyph>&#9790;</span></button>
         </div>
