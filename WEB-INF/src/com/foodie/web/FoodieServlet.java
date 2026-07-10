@@ -72,11 +72,24 @@ public class FoodieServlet extends HttpServlet {
     // GET
     // ---------------------------------------------------------------
 
+    /**
+     * The route key used by the doGet/doPost switches. URLs are exposed with a
+     * ".jsp" suffix (see {@link JspUrlFilter}); strip it here so every existing
+     * {@code case "/menu"} etc. keeps matching regardless of the suffix.
+     */
+    private static String route(HttpServletRequest req) {
+        String path = req.getServletPath();
+        if (path != null && path.endsWith(".jsp")) {
+            return path.substring(0, path.length() - ".jsp".length());
+        }
+        return path;
+    }
+
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse res)
             throws ServletException, IOException {
 
-        switch (req.getServletPath()) {
+        switch (route(req)) {
             case "/login":
                 if (req.getSession(false) != null && req.getSession(false).getAttribute("userId") != null) {
                     res.sendRedirect(req.getContextPath() + "/dashboard");
@@ -204,7 +217,7 @@ public class FoodieServlet extends HttpServlet {
 
         req.setCharacterEncoding(StandardCharsets.UTF_8.name());
 
-        switch (req.getServletPath()) {
+        switch (route(req)) {
             case "/login":           handleLogin(req, res);           return;
             case "/signup":          handleSignup(req, res);          return;
             case "/forgot-password": handleForgotPassword(req, res);  return;
