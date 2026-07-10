@@ -19,7 +19,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Complaints | Foodie Admin</title>
     <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/style.css?v=16">
-    <script src="${pageContext.request.contextPath}/assets/js/theme.js"></script>
+    <script src="${pageContext.request.contextPath}/assets/js/theme.js?v=2"></script>
 </head>
 <body class="dashboard-page admin-complaints-page">
 <div class="dashboard-shell">

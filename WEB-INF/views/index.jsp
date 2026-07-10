@@ -16,7 +16,7 @@
     - custom css link
   -->
   <link rel="stylesheet" href="./assets/css/style.css?v=16">
-  <script src="./assets/js/theme.js"></script>
+  <script src="./assets/js/theme.js?v=2"></script>
 
   <!--
     - google font link

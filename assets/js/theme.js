@@ -64,3 +64,98 @@
     wire();
   }
 })();
+
+/**
+ * Page-navigation loading overlay.
+ *
+ * Shows a branded spinner on the page you're leaving whenever a full-page
+ * navigation starts — a link click or a real form submit. Because it renders
+ * on the *outgoing* page, it also covers the wait for slow destinations (the
+ * admin dashboard's cold DB queries) and the extra /*.jsp redirect hop.
+ *
+ * It deliberately skips anything that doesn't actually navigate: AJAX forms
+ * (chat, rider actions call preventDefault), cancelled confirm() dialogs,
+ * new-tab / download / hash / mailto links, and modifier-clicks.
+ */
+(function () {
+  'use strict';
+
+  var overlay = null;
+
+  function build() {
+    if (overlay) return overlay;
+    overlay = document.createElement('div');
+    overlay.className = 'page-loader';
+    overlay.setAttribute('aria-hidden', 'true');
+    overlay.innerHTML =
+      '<div class="page-loader-spinner"></div>' +
+      '<div class="page-loader-label">Loading…</div>';
+    document.body.appendChild(overlay);
+    return overlay;
+  }
+
+  var failsafe = null;
+  function show() {
+    build();
+    // Next frame so the opacity transition actually runs.
+    window.requestAnimationFrame(function () { overlay.classList.add('is-active'); });
+    // Never let it hang forever if a navigation is blocked (the admin
+    // dashboard can take ~20s, so keep this comfortably above that).
+    if (failsafe) window.clearTimeout(failsafe);
+    failsafe = window.setTimeout(hide, 40000);
+  }
+
+  function hide() {
+    if (overlay) overlay.classList.remove('is-active');
+    if (failsafe) { window.clearTimeout(failsafe); failsafe = null; }
+  }
+
+  function isModifiedClick(e) {
+    return e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey;
+  }
+
+  function wireLoader() {
+    build();
+
+    // Link navigations.
+    document.addEventListener('click', function (e) {
+      if (e.defaultPrevented || isModifiedClick(e)) return;
+      var a = e.target && e.target.closest ? e.target.closest('a') : null;
+      if (!a) return;
+      var href = a.getAttribute('href');
+      if (!href) return;
+      if (a.target && a.target !== '_self') return;   // opens a new tab/window
+      if (a.hasAttribute('download')) return;
+      if (href.charAt(0) === '#') return;              // in-page anchor
+      if (/^(javascript|mailto|tel):/i.test(href)) return;
+
+      var url;
+      try { url = new URL(a.href, window.location.href); } catch (err) { return; }
+      if (url.origin !== window.location.origin) return;         // external
+      // Same page, only the hash changes -> no navigation.
+      if (url.pathname === window.location.pathname &&
+          url.search === window.location.search && url.hash) return;
+
+      show();
+    });
+
+    // Real form submits. AJAX forms and cancelled confirm() dialogs have
+    // already called preventDefault by the time this bubbles to document.
+    document.addEventListener('submit', function (e) {
+      if (e.defaultPrevented) return;
+      if (e.target && e.target.getAttribute('target') === '_blank') return;
+      show();
+    });
+  }
+
+  // Hide on restore from the back/forward cache, so a returning page never
+  // shows a stuck spinner.
+  window.addEventListener('pageshow', hide);
+  window.addEventListener('pagehide', hide);
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', wireLoader);
+  } else {
+    wireLoader();
+  }
+})();

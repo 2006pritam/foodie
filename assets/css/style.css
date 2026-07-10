@@ -3543,6 +3543,68 @@ html[data-theme="dark"] .header.active .navbar-link { color: #cbd4e1; }
 }
 
 /*-----------------------------------*\
+  #PAGE LOADER
+\*-----------------------------------*/
+
+/* Full-screen overlay shown during page navigation (injected by theme.js).
+   Because it lives on the page being left, it also covers the wait for slow
+   destinations (e.g. the admin dashboard) and the /*.jsp redirect hop. */
+.page-loader {
+  position: fixed;
+  inset: 0;
+  z-index: 3000;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 20px;
+  background: rgba(255, 255, 255, 0.84);
+  -webkit-backdrop-filter: blur(4px);
+  backdrop-filter: blur(4px);
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.25s ease, visibility 0.25s ease;
+}
+
+.page-loader.is-active {
+  opacity: 1;
+  visibility: visible;
+}
+
+html[data-theme="dark"] .page-loader {
+  background: rgba(10, 14, 25, 0.84);
+}
+
+.page-loader-spinner {
+  width: 58px;
+  height: 58px;
+  border-radius: 50%;
+  border: 5px solid rgba(245, 197, 24, 0.25);
+  border-top-color: #f5c518;
+  animation: pageLoaderSpin 0.8s linear infinite;
+}
+
+.page-loader-label {
+  font-size: 1.5rem;
+  font-weight: 600;
+  letter-spacing: 0.4px;
+  color: var(--rich-black-fogra-29);
+}
+
+html[data-theme="dark"] .page-loader-label {
+  color: #e6ebf4;
+}
+
+@keyframes pageLoaderSpin {
+  to { transform: rotate(360deg); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .page-loader { transition: none; }
+  .page-loader-spinner { animation-duration: 2.4s; }
+}
+
+/*-----------------------------------*\
   #RESPONSIVE — admin & small screens
 \*-----------------------------------*/
 

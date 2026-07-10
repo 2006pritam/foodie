@@ -9,7 +9,7 @@
 
   <link rel="shortcut icon" href="./favicon.svg" type="image/svg+xml">
   <link rel="stylesheet" href="./assets/css/style.css?v=16">
-  <script src="./assets/js/theme.js"></script>
+  <script src="./assets/js/theme.js?v=2"></script>
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
