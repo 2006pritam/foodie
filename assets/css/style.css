@@ -774,6 +774,36 @@ body.active { overflow: hidden; }
   grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
 }
 
+.admin-overview {
+  display: grid;
+  gap: 28px;
+}
+
+.metric-section {
+  display: grid;
+  gap: 16px;
+}
+
+.section-title {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  flex-wrap: wrap;
+  padding-bottom: 12px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.section-title h2 {
+  font-size: 1.9rem;
+  color: #ffffff;
+  margin: 0;
+}
+
+.section-title span {
+  color: rgba(230, 235, 244, 0.6);
+  font-size: 1.3rem;
+}
+
 .metric-card {
   padding: 26px;
   border-radius: 24px;

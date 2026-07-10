@@ -20,7 +20,7 @@
 <head>
     <meta charset="UTF-8">
     <title>Admin Dashboard | Foodie SaaS</title>
-    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/style.css?v=14">
+    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/style.css?v=15">
     <script src="${pageContext.request.contextPath}/assets/js/theme.js"></script>
 </head>
 <body class="dashboard-page admin-dashboard">
@@ -58,43 +58,70 @@
             </div>
         </header>
 
-        <section class="metric-cards">
-            <article class="metric-card accent-yellow">
-                <span class="metric-label">Total Items</span>
-                <strong><%= num(request.getAttribute("totalItems")) %></strong>
-                <small>In menu</small>
-            </article>
-            <article class="metric-card accent-blue">
-                <span class="metric-label">Total Orders</span>
-                <strong><%= num(request.getAttribute("totalOrders")) %></strong>
-                <small>All time</small>
-            </article>
-            <article class="metric-card accent-purple">
-                <span class="metric-label">Pending</span>
-                <strong><%= num(request.getAttribute("pendingCount")) %></strong>
-                <small>Awaiting review</small>
-            </article>
-            <article class="metric-card accent-green">
-                <span class="metric-label">Delivered</span>
-                <strong><%= num(request.getAttribute("deliveredCount")) %></strong>
-                <small>Completed</small>
-            </article>
-            <article class="metric-card accent-red">
-                <span class="metric-label">Rejected</span>
-                <strong><%= num(request.getAttribute("rejectedCount")) %></strong>
-                <small>Declined</small>
-            </article>
-            <article class="metric-card accent-blue">
-                <span class="metric-label">Feedback</span>
-                <strong><%= num(request.getAttribute("feedbackCount")) %></strong>
-                <small>Messages received</small>
-            </article>
-            <article class="metric-card accent-red">
-                <span class="metric-label">Open Complaints</span>
-                <strong><%= num(request.getAttribute("openComplaints")) %></strong>
-                <small><a href="${pageContext.request.contextPath}/admin/complaints">View all</a></small>
-            </article>
-        </section>
+        <div class="admin-overview">
+            <section class="metric-section">
+                <div class="section-title">
+                    <h2>Overview</h2>
+                    <span>Key figures at a glance</span>
+                </div>
+                <div class="metric-cards">
+                    <article class="metric-card accent-yellow">
+                        <span class="metric-label">Total Items</span>
+                        <strong><%= num(request.getAttribute("totalItems")) %></strong>
+                        <small>In menu</small>
+                    </article>
+                    <article class="metric-card accent-blue">
+                        <span class="metric-label">Total Orders</span>
+                        <strong><%= num(request.getAttribute("totalOrders")) %></strong>
+                        <small>All time</small>
+                    </article>
+                    <article class="metric-card accent-purple">
+                        <span class="metric-label">Feedback</span>
+                        <strong><%= num(request.getAttribute("feedbackCount")) %></strong>
+                        <small>Messages received</small>
+                    </article>
+                    <article class="metric-card accent-red">
+                        <span class="metric-label">Open Complaints</span>
+                        <strong><%= num(request.getAttribute("openComplaints")) %></strong>
+                        <small><a href="${pageContext.request.contextPath}/admin/complaints">View all</a></small>
+                    </article>
+                </div>
+            </section>
+
+            <section class="metric-section">
+                <div class="section-title">
+                    <h2>Order Status</h2>
+                    <span>Live breakdown of the order pipeline</span>
+                </div>
+                <div class="metric-cards status-metrics">
+                    <article class="metric-card accent-yellow">
+                        <span class="metric-label">Pending</span>
+                        <strong><%= num(request.getAttribute("pendingCount")) %></strong>
+                        <small>Awaiting review</small>
+                    </article>
+                    <article class="metric-card accent-blue">
+                        <span class="metric-label">Accepted</span>
+                        <strong><%= num(request.getAttribute("acceptedCount")) %></strong>
+                        <small>In progress</small>
+                    </article>
+                    <article class="metric-card accent-purple">
+                        <span class="metric-label">Picked up</span>
+                        <strong><%= num(request.getAttribute("pickedUpCount")) %></strong>
+                        <small>Out for delivery</small>
+                    </article>
+                    <article class="metric-card accent-green">
+                        <span class="metric-label">Delivered</span>
+                        <strong><%= num(request.getAttribute("deliveredCount")) %></strong>
+                        <small>Completed</small>
+                    </article>
+                    <article class="metric-card accent-red">
+                        <span class="metric-label">Rejected</span>
+                        <strong><%= num(request.getAttribute("rejectedCount")) %></strong>
+                        <small>Declined</small>
+                    </article>
+                </div>
+            </section>
+        </div>
 
         <section class="dashboard-grid">
             <article class="dashboard-panel panel-large feedback-panel">
@@ -227,34 +254,6 @@
                         <strong>16 orders</strong>
                     </li>
                 </ul>
-            </article>
-
-            <article class="dashboard-panel status-panel">
-                <div class="panel-header">
-                    <h2>Order Status</h2>
-                </div>
-                <div class="status-list">
-                    <div class="status-item">
-                        <span>Pending</span>
-                        <strong><%= num(request.getAttribute("pendingCount")) %></strong>
-                    </div>
-                    <div class="status-item">
-                        <span>Accepted</span>
-                        <strong><%= num(request.getAttribute("acceptedCount")) %></strong>
-                    </div>
-                    <div class="status-item">
-                        <span>Picked up</span>
-                        <strong><%= num(request.getAttribute("pickedUpCount")) %></strong>
-                    </div>
-                    <div class="status-item">
-                        <span>Delivered</span>
-                        <strong><%= num(request.getAttribute("deliveredCount")) %></strong>
-                    </div>
-                    <div class="status-item">
-                        <span>Rejected</span>
-                        <strong><%= num(request.getAttribute("rejectedCount")) %></strong>
-                    </div>
-                </div>
             </article>
         </section>
     </main>
