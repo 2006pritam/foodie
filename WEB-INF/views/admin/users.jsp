@@ -5,8 +5,9 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>User Management | Foodie Admin</title>
-    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/style.css?v=14">
+    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/style.css?v=16">
     <script src="${pageContext.request.contextPath}/assets/js/theme.js"></script>
 </head>
 <body class="dashboard-page admin-users-page">
@@ -28,6 +29,7 @@
             <h2>Existing accounts</h2>
             <p>Manage active users and roles across your app.</p>
         </div>
+        <div class="table-scroll">
         <table class="data-table">
             <thead>
                 <tr>
@@ -76,6 +78,7 @@
             %>
             </tbody>
         </table>
+        </div>
     </section>
 
     <section class="panel form-panel">

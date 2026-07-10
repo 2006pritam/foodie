@@ -3541,3 +3541,82 @@ html[data-theme="dark"] .header.active .navbar-link { color: #cbd4e1; }
 @media (prefers-reduced-motion: reduce) {
   .hero-img { animation: none; }
 }
+
+/*-----------------------------------*\
+  #RESPONSIVE — admin & small screens
+\*-----------------------------------*/
+
+/* Wide admin data tables (orders, items, users…) scroll horizontally inside
+   this wrapper instead of overflowing the viewport on phones. */
+.table-scroll {
+  width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+@media (max-width: 900px) {
+  /* Trim the generous desktop padding so content gets more width on tablets. */
+  .dashboard-page {
+    padding: 32px 12px 48px;
+  }
+  .admin-dashboard-layout {
+    padding: 18px;
+    gap: 18px;
+  }
+  .admin-topbar {
+    padding: 20px;
+  }
+  .admin-topbar h1 {
+    font-size: 2.4rem;
+  }
+}
+
+@media (max-width: 720px) {
+  /* Keep admin tables legible: scroll rather than crush columns to nothing. */
+  .table-scroll > .data-table {
+    min-width: 620px;
+  }
+  /* The inline per-row item editor stacks into one column so it stays usable. */
+  .item-row-grid {
+    grid-template-columns: 1fr;
+  }
+  .item-thumb {
+    width: 48px;
+    height: 48px;
+  }
+  .admin-topbar h1 {
+    font-size: 2.1rem;
+  }
+  .eyebrow {
+    font-size: 1.2rem;
+  }
+  .metric-card strong {
+    font-size: 2.6rem;
+  }
+  .section-title h2 {
+    font-size: 1.7rem;
+  }
+}
+
+@media (max-width: 520px) {
+  .dashboard-page {
+    padding: 20px 10px 40px;
+  }
+  .admin-dashboard-layout {
+    padding: 12px;
+  }
+  .admin-topbar,
+  .dashboard-header {
+    padding: 16px;
+  }
+  /* Header action buttons go full width and share the row evenly. */
+  .admin-topbar-actions,
+  .dashboard-actions {
+    width: 100%;
+  }
+  .admin-topbar-actions .button,
+  .dashboard-actions .button {
+    flex: 1 1 auto;
+    text-align: center;
+  }
+}
