@@ -28,7 +28,7 @@ public class UserDao {
      */
     public User findByEmail(String email) throws SQLException {
         final String sql =
-            "SELECT id, name, email, password, role, tenant_id " +
+            "SELECT id, name, email, password, role, tenant_id, phone, photo_url " +
             "FROM resturent WHERE email = ?";
 
         try (Connection conn = DatabaseManager.getConnection();
@@ -48,7 +48,9 @@ public class UserDao {
                         rs.getString("email"),
                         rs.getString("password"),
                         role,
-                        rs.getInt("tenant_id")
+                        rs.getInt("tenant_id"),
+                        rs.getString("phone"),
+                        rs.getString("photo_url")
                     );
                 }
             }
@@ -120,6 +122,42 @@ public class UserDao {
     }
 
     /**
+     * Find a user by their ID.
+     *
+     * @return the {@link User}, or {@code null} if not found.
+     */
+    public User findById(int id) throws SQLException {
+        final String sql =
+            "SELECT id, name, email, password, role, tenant_id, phone, photo_url " +
+            "FROM resturent WHERE id = ?";
+
+        try (Connection conn = DatabaseManager.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, id);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    String role = rs.getString("role");
+                    String normalizedEmail = normalise(rs.getString("email"));
+                    if ("admin@gmail.com".equals(normalizedEmail)) {
+                        role = "ADMIN";
+                    }
+                    return new User(
+                        rs.getInt("id"),
+                        rs.getString("name"),
+                        rs.getString("email"),
+                        rs.getString("password"),
+                        role,
+                        rs.getInt("tenant_id"),
+                        rs.getString("phone"),
+                        rs.getString("photo_url")
+                    );
+                }
+            }
+        }
+        return null;
+    }
+
+    /**
      * Ensure the restaurant table contains the required role and tenant_id columns.
      * This allows runtime bootstrapping on older deployments that still have the
      * legacy schema.
@@ -166,12 +204,21 @@ public class UserDao {
             "email VARCHAR(255) NOT NULL UNIQUE, " +
             "password VARCHAR(255) NOT NULL, " +
             "role VARCHAR(20) NOT NULL DEFAULT 'USER', " +
-            "tenant_id INTEGER NOT NULL DEFAULT 1" +
+            "tenant_id INTEGER NOT NULL DEFAULT 1, " +
+            "phone VARCHAR(50), " +
+            "photo_url VARCHAR(500)" +
             ")";
 
         try (Connection conn = DatabaseManager.getConnection();
              Statement st = conn.createStatement()) {
             st.execute(sql);
+        }
+        
+        // Migration for existing deployments
+        try (Connection conn = DatabaseManager.getConnection();
+             Statement st = conn.createStatement()) {
+            st.execute("ALTER TABLE resturent ADD COLUMN IF NOT EXISTS phone VARCHAR(50)");
+            st.execute("ALTER TABLE resturent ADD COLUMN IF NOT EXISTS photo_url VARCHAR(500)");
         }
     }
 
@@ -235,7 +282,7 @@ public class UserDao {
 
     public List<User> findAll() throws SQLException {
         final String sql =
-            "SELECT id, name, email, password, role, tenant_id " +
+            "SELECT id, name, email, password, role, tenant_id, phone, photo_url " +
             "FROM resturent ORDER BY id";
 
         List<User> users = new ArrayList<>();
@@ -250,11 +297,70 @@ public class UserDao {
                     rs.getString("email"),
                     rs.getString("password"),
                     rs.getString("role"),
-                    rs.getInt("tenant_id")
+                    rs.getInt("tenant_id"),
+                    rs.getString("phone"),
+                    rs.getString("photo_url")
                 ));
             }
         }
         return users;
+    }
+
+    // ---------------------------------------------------------------
+    // Profile updates
+    // ---------------------------------------------------------------
+
+    /**
+     * Update user's name, phone, and photo URL.
+     *
+     * @return true when a row was updated.
+     */
+    public boolean updateProfile(int userId, String name, String phone, String photoUrl) throws SQLException {
+        final String sql =
+            "UPDATE resturent SET name = ?, phone = ?, photo_url = ? WHERE id = ?";
+
+        try (Connection conn = DatabaseManager.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setString(1, name == null ? null : name.trim());
+            ps.setString(2, phone == null ? null : phone.trim());
+            ps.setString(3, photoUrl == null ? null : photoUrl.trim());
+            ps.setInt(4, userId);
+            return ps.executeUpdate() == 1;
+        }
+    }
+
+    /**
+     * Update user's email address (ensures uniqueness).
+     *
+     * @return true when a row was updated.
+     */
+    public boolean updateEmail(int userId, String newEmail) throws SQLException {
+        if (emailExists(newEmail)) {
+            throw new SQLException("Email already in use");
+        }
+        final String sql = "UPDATE resturent SET email = ? WHERE id = ?";
+        try (Connection conn = DatabaseManager.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setString(1, normalise(newEmail));
+            ps.setInt(2, userId);
+            return ps.executeUpdate() == 1;
+        }
+    }
+
+    /**
+     * Update user's password.
+     *
+     * @return true when a row was updated.
+     */
+    public boolean updatePasswordById(int userId, String newPlainPassword) throws SQLException {
+        final String sql = "UPDATE resturent SET password = ? WHERE id = ?";
+        try (Connection conn = DatabaseManager.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setString(1, newPlainPassword);
+            ps.setInt(2, userId);
+            return ps.executeUpdate() == 1;
+        }
     }
 
     // ---------------------------------------------------------------

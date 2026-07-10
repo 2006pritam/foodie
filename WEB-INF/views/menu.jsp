@@ -22,6 +22,7 @@
             <a class="button outline" href="${pageContext.request.contextPath}/orders">My Orders</a>
             <a class="button outline" href="${pageContext.request.contextPath}/reservations">Table Booking</a>
             <a class="button outline" href="${pageContext.request.contextPath}/complaints">Raise Complaint</a>
+            <a class="button outline" href="${pageContext.request.contextPath}/profile">My Profile</a>
             <a class="button danger" href="${pageContext.request.contextPath}/logout">Sign Out</a>
             <button type="button" class="theme-toggle" data-theme-toggle aria-label="Toggle theme"><span data-theme-glyph>&#9790;</span></button>
         </div>

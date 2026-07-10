@@ -24,12 +24,13 @@
         <a class="button outline" href="admin/dashboard">Admin Panel</a>
       <% } else if ("RIDER".equalsIgnoreCase(role)) { %>
         <a class="button outline" href="rider/dashboard">Rider Panel</a>
-      <% } else { %>
+<% } else { %>
         <a class="button outline" href="menu">Browse Menu</a>
         <a class="button outline" href="cart">My Cart</a>
         <a class="button outline" href="orders">My Orders</a>
         <a class="button outline" href="reservations">Table Booking</a>
         <a class="button outline" href="complaints">Raise Complaint</a>
+        <a class="button outline" href="profile">My Profile</a>
       <% } %>
       <a class="button danger" href="logout">Sign Out</a>
       <button type="button" class="theme-toggle" data-theme-toggle aria-label="Toggle theme"><span data-theme-glyph>&#9790;</span></button>

@@ -124,6 +124,11 @@
 
   <servlet-mapping>
     <servlet-name>FoodieServlet</servlet-name>
+    <url-pattern>/profile</url-pattern>
+  </servlet-mapping>
+
+  <servlet-mapping>
+    <servlet-name>FoodieServlet</servlet-name>
     <url-pattern>/admin/complaints</url-pattern>
   </servlet-mapping>
 

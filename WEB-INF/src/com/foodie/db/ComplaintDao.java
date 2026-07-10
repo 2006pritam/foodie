@@ -40,11 +40,14 @@ public class ComplaintDao {
             "order_code VARCHAR(40), " +
             "message TEXT NOT NULL, " +
             "status VARCHAR(20) NOT NULL DEFAULT 'OPEN', " +
+            "admin_reply TEXT, " +
             "created_at TIMESTAMP WITHOUT TIME ZONE DEFAULT NOW()" +
             ")";
         try (Connection conn = DatabaseManager.getConnection();
              Statement st = conn.createStatement()) {
             st.execute(sql);
+            // Migration for deployments created before admin replies existed.
+            st.execute("ALTER TABLE complaints ADD COLUMN IF NOT EXISTS admin_reply TEXT");
         }
     }
 
@@ -100,12 +103,14 @@ public class ComplaintDao {
         }
     }
 
-    /** Admin marks a complaint resolved. */
-    public boolean resolve(int id) throws SQLException {
-        final String sql = "UPDATE complaints SET status = 'RESOLVED' WHERE id = ? AND status = 'OPEN'";
+    /** Admin marks a complaint resolved with a reply message for the customer. */
+    public boolean resolve(int id, String reply) throws SQLException {
+        final String sql =
+            "UPDATE complaints SET status = 'RESOLVED', admin_reply = ? WHERE id = ? AND status = 'OPEN'";
         try (Connection conn = DatabaseManager.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
-            ps.setInt(1, id);
+            ps.setString(1, reply == null ? null : reply.trim());
+            ps.setInt(2, id);
             return ps.executeUpdate() == 1;
         }
     }
@@ -120,6 +125,7 @@ public class ComplaintDao {
         c.setOrderCode(rs.getString("order_code"));
         c.setMessage(rs.getString("message"));
         c.setStatus(rs.getString("status"));
+        c.setAdminReply(rs.getString("admin_reply"));
         Timestamp ts = rs.getTimestamp("created_at");
         c.setCreatedAt(ts == null ? "" : ts.toString());
         return c;

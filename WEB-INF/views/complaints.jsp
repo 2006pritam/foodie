@@ -37,6 +37,7 @@
         <div class="dashboard-actions">
             <a class="button outline" href="<%= ctx %>/orders">My Orders</a>
             <a class="button outline" href="<%= ctx %>/menu">Browse Menu</a>
+            <a class="button outline" href="<%= ctx %>/profile">My Profile</a>
             <a class="button danger" href="<%= ctx %>/logout">Sign Out</a>
             <button type="button" class="theme-toggle" data-theme-toggle aria-label="Toggle theme"><span data-theme-glyph>&#9790;</span></button>
         </div>
@@ -94,7 +95,7 @@
         %>
         <table class="data-table">
             <thead>
-            <tr><th>Code</th><th>Order</th><th>Problem</th><th>Status</th><th>Date</th></tr>
+            <tr><th>Code</th><th>Order</th><th>Problem</th><th>Status</th><th>Reply from us</th><th>Date</th></tr>
             </thead>
             <tbody>
             <% for (Complaint c : complaints) { %>
@@ -103,6 +104,7 @@
                     <td><%= esc(c.getOrderCode()) %></td>
                     <td><%= esc(c.getMessage()) %></td>
                     <td><span class="order-badge <%= badgeClass(c.getStatus()) %>"><%= label(c.getStatus()) %></span></td>
+                    <td><%= c.getAdminReply() == null || c.getAdminReply().isEmpty() ? "<span class=\"muted\">Awaiting response</span>" : esc(c.getAdminReply()) %></td>
                     <td><%= esc(c.getCreatedAt()) %></td>
                 </tr>
             <% } %>

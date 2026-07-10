@@ -47,7 +47,7 @@
             <thead>
             <tr>
                 <th>Code</th><th>Customer</th><th>Order</th><th>Problem</th>
-                <th>Status</th><th>Date</th><th>Actions</th>
+                <th>Status</th><th>Reply</th><th>Date</th><th>Actions</th>
             </tr>
             </thead>
             <tbody>
@@ -56,7 +56,7 @@
                 String ctx = request.getContextPath();
                 if (complaints == null || complaints.isEmpty()) {
             %>
-                <tr><td colspan="7" class="empty-state">No complaints yet.</td></tr>
+                <tr><td colspan="8" class="empty-state">No complaints yet.</td></tr>
             <%
                 } else {
                     for (Complaint c : complaints) {
@@ -67,14 +67,12 @@
                     <td><%= esc(c.getOrderCode()) %></td>
                     <td><%= esc(c.getMessage()) %></td>
                     <td><span class="order-badge <%= badgeClass(c.getStatus()) %>"><%= label(c.getStatus()) %></span></td>
+                    <td><%= c.getAdminReply() == null || c.getAdminReply().isEmpty() ? "&mdash;" : esc(c.getAdminReply()) %></td>
                     <td><%= esc(c.getCreatedAt()) %></td>
                     <td class="item-actions">
                         <% if (!"RESOLVED".equals(c.getStatus())) { %>
-                            <form class="inline-form" method="post" action="<%= ctx %>/admin/complaints">
-                                <input type="hidden" name="action" value="resolve" />
-                                <input type="hidden" name="id" value="<%= c.getId() %>" />
-                                <button type="submit" class="button small">Mark resolved</button>
-                            </form>
+                            <button type="button" class="button small"
+                                    onclick="openResolve('<%= c.getId() %>', '<%= esc(c.getComplaintCode()) %>')">Resolve</button>
                         <% } else { %>
                             <span class="muted">Resolved</span>
                         <% } %>
@@ -88,5 +86,44 @@
         </table>
     </section>
 </div>
+
+<!-- Resolve modal: admin types a reply the customer will see. -->
+<div class="pin-overlay" id="resolveOverlay" role="dialog" aria-modal="true" aria-labelledby="resolveTitle" hidden>
+    <div class="pin-modal resv-modal">
+        <button type="button" class="pin-close" aria-label="Close" onclick="closeResolve()">&times;</button>
+        <h2 id="resolveTitle">Resolve complaint</h2>
+        <p class="pin-sub">Reply to complaint <strong id="resolveCode"></strong>. The customer will see your message.</p>
+        <form method="post" action="${pageContext.request.contextPath}/admin/complaints" id="resolveForm">
+            <input type="hidden" name="action" value="resolve" />
+            <input type="hidden" name="id" id="resolveId" />
+            <div class="form-row">
+                <label>Reply to customer</label>
+                <textarea name="reply" id="resolveReply" rows="4" required maxlength="1000"
+                          placeholder="e.g. Sorry for the trouble — we've refunded your order."></textarea>
+            </div>
+            <button type="submit" class="button">Send reply &amp; resolve</button>
+        </form>
+    </div>
+</div>
+
+<script>
+    (function () {
+        var overlay = document.getElementById('resolveOverlay');
+        var idField = document.getElementById('resolveId');
+        var codeEl  = document.getElementById('resolveCode');
+        var reply   = document.getElementById('resolveReply');
+
+        window.openResolve = function (id, code) {
+            idField.value = id;
+            codeEl.textContent = code;
+            reply.value = '';
+            overlay.hidden = false;
+            reply.focus();
+        };
+        window.closeResolve = function () { overlay.hidden = true; };
+        overlay.addEventListener('click', function (e) { if (e.target === overlay) closeResolve(); });
+        document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && !overlay.hidden) closeResolve(); });
+    })();
+</script>
 </body>
 </html>

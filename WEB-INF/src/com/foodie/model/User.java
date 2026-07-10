@@ -7,6 +7,8 @@ public class User {
     private String password;
     private String role;
     private int tenantId;
+    private String phone;
+    private String photoUrl;
 
     public User() {}
 
@@ -17,6 +19,17 @@ public class User {
         this.password = password;
         this.role = role;
         this.tenantId = tenantId;
+    }
+
+    public User(int id, String name, String email, String password, String role, int tenantId, String phone, String photoUrl) {
+        this.id = id;
+        this.name = name;
+        this.email = email;
+        this.password = password;
+        this.role = role;
+        this.tenantId = tenantId;
+        this.phone = phone;
+        this.photoUrl = photoUrl;
     }
 
     public int getId() {
@@ -65,5 +78,21 @@ public class User {
 
     public void setTenantId(int tenantId) {
         this.tenantId = tenantId;
+    }
+
+    public String getPhone() {
+        return phone;
+    }
+
+    public void setPhone(String phone) {
+        this.phone = phone;
+    }
+
+    public String getPhotoUrl() {
+        return photoUrl;
+    }
+
+    public void setPhotoUrl(String photoUrl) {
+        this.photoUrl = photoUrl;
     }
 }

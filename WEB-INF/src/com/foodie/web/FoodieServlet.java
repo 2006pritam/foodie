@@ -167,6 +167,11 @@ public class FoodieServlet extends HttpServlet {
                 showComplaints(req, res);
                 return;
 
+            case "/profile":
+                if (!ensureLoggedIn(req, res)) return;
+                showProfile(req, res);
+                return;
+
             case "/admin/complaints":
                 if (!ensureLoggedIn(req, res)) return;
                 if (!authorizeRole(req, res, "ADMIN")) return;
@@ -203,6 +208,7 @@ public class FoodieServlet extends HttpServlet {
             case "/login":           handleLogin(req, res);           return;
             case "/signup":          handleSignup(req, res);          return;
             case "/forgot-password": handleForgotPassword(req, res);  return;
+            case "/profile":         handleProfilePost(req, res);     return;
             case "/admin/users":     handleAdminUsersPost(req, res);  return;
             case "/admin/items":     handleAdminItemsPost(req, res);  return;
             case "/admin/orders":    handleAdminOrdersPost(req, res); return;
@@ -1509,12 +1515,127 @@ public class FoodieServlet extends HttpServlet {
         int id = parseIntSafe(param(req, "id"), -1);
         try {
             if (id > 0 && "resolve".equals(param(req, "action"))) {
-                complaintDao.resolve(id);
+                String reply = param(req, "reply");
+                complaintDao.resolve(id, reply);
             }
         } catch (SQLException e) {
             LOGGER.log(Level.SEVERE, "Admin complaint resolve error", e);
         }
         res.sendRedirect(req.getContextPath() + "/admin/complaints");
+    }
+
+    // ---------------------------------------------------------------
+    // User Profile
+    // ---------------------------------------------------------------
+
+    /** Show the user's profile page with current details and forms to update them. */
+    private void showProfile(HttpServletRequest req, HttpServletResponse res)
+            throws ServletException, IOException {
+        HttpSession session = req.getSession(false);
+        Object flash = session == null ? null : session.getAttribute("profileFlash");
+        if (flash != null) {
+            req.setAttribute("profileMessage", flash);
+            session.removeAttribute("profileFlash");
+        }
+
+        int userId = intAttr(session, "userId");
+        try {
+            User user = userDao.findById(userId);
+            if (user != null) {
+                req.setAttribute("profileUser", user);
+            }
+        } catch (SQLException e) {
+            LOGGER.log(Level.SEVERE, "Failed to load profile", e);
+            req.setAttribute("profileMessage", msg("error", "Unable to load profile. Please try again."));
+        }
+        forward(req, res, "/WEB-INF/views/profile.jsp");
+    }
+
+    /** POST /profile – handle profile updates (name, phone, photo, password, email). */
+    private void handleProfilePost(HttpServletRequest req, HttpServletResponse res)
+            throws ServletException, IOException {
+        if (!ensureLoggedIn(req, res)) return;
+
+        HttpSession session = req.getSession(true);
+        int userId = intAttr(session, "userId");
+        String action = param(req, "action");
+        String message = null;
+
+        try {
+            switch (action) {
+                case "updateProfile": {
+                    String name = param(req, "name");
+                    String phone = param(req, "phone");
+                    String photoUrl = param(req, "photoUrl");
+                    boolean updated = userDao.updateProfile(userId, name, phone, photoUrl);
+                    message = updated ? "Profile updated successfully." : "Profile update failed.";
+                    if (updated && name != null && !name.trim().isEmpty()) {
+                        session.setAttribute("userName", name.trim());
+                    }
+                    break;
+                }
+                case "changePassword": {
+                    String currentPassword = param(req, "currentPassword");
+                    String newPassword = param(req, "newPassword");
+                    String confirmPassword = param(req, "confirmPassword");
+
+                    if (blank(currentPassword) || blank(newPassword)) {
+                        message = "All password fields are required.";
+                    } else if (!newPassword.equals(confirmPassword)) {
+                        message = "New passwords do not match.";
+                    } else {
+                        User user = userDao.findById(userId);
+                        if (user != null && user.getPassword().equals(currentPassword)) {
+                            boolean updated = userDao.updatePassword(user.getEmail(), newPassword);
+                            message = updated ? "Password changed successfully." : "Password change failed.";
+                        } else {
+                            message = "Current password is incorrect.";
+                        }
+                    }
+                    break;
+                }
+                case "changeEmail": {
+                    String newEmail = param(req, "newEmail");
+                    String password = param(req, "password");
+
+                    if (blank(newEmail) || blank(password)) {
+                        message = "Email and current password are required.";
+                    } else {
+                        User user = userDao.findById(userId);
+                        if (user != null && user.getPassword().equals(password)) {
+                            try {
+                                boolean updated = userDao.updateEmail(userId, newEmail);
+                                if (updated) {
+                                    session.setAttribute("userEmail", newEmail.toLowerCase());
+                                    message = "Email updated successfully.";
+                                } else {
+                                    message = "Email update failed.";
+                                }
+                            } catch (SQLException e) {
+                                if ("Email already in use".equals(e.getMessage())) {
+                                    message = "This email is already registered.";
+                                } else {
+                                    throw e;
+                                }
+                            }
+                        } else {
+                            message = "Current password is incorrect.";
+                        }
+                    }
+                    break;
+                }
+                default:
+                    message = "Unknown action.";
+            }
+        } catch (SQLException e) {
+            LOGGER.log(Level.SEVERE, "Profile update error", e);
+            message = "A server error occurred. Please try again.";
+        }
+
+        if (message != null) {
+            session.setAttribute("profileFlash", msg(message.startsWith("Password") || message.startsWith("Email") || message.startsWith("Profile") ? "success" : "error", message));
+        }
+        res.sendRedirect(req.getContextPath() + "/profile");
     }
 
     private static String normalizeShape(String s) {
