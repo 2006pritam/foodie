@@ -171,6 +171,12 @@
     <url-pattern>/admin/complaints.jsp</url-pattern>
   </servlet-mapping>
 
+  <servlet-mapping>
+    <servlet-name>FoodieServlet</servlet-name>
+    <url-pattern>/admin/coupons</url-pattern>
+    <url-pattern>/admin/coupons.jsp</url-pattern>
+  </servlet-mapping>
+
   <welcome-file-list>
     <welcome-file>home</welcome-file>
   </welcome-file-list>

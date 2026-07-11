@@ -56,6 +56,9 @@ public class OrderDao {
             "delivery_pin VARCHAR(4), " +
             "table_id INTEGER, " +
             "table_name VARCHAR(120), " +
+            "coupon_code VARCHAR(40), " +
+            "discount NUMERIC(10,2) NOT NULL DEFAULT 0, " +
+            "rating INTEGER, " +
             "created_at TIMESTAMP WITHOUT TIME ZONE DEFAULT NOW()" +
             ")";
 
@@ -77,6 +80,9 @@ public class OrderDao {
             st.execute("ALTER TABLE orders ADD COLUMN IF NOT EXISTS delivery_pin VARCHAR(4)");
             st.execute("ALTER TABLE orders ADD COLUMN IF NOT EXISTS table_id INTEGER");
             st.execute("ALTER TABLE orders ADD COLUMN IF NOT EXISTS table_name VARCHAR(120)");
+            st.execute("ALTER TABLE orders ADD COLUMN IF NOT EXISTS coupon_code VARCHAR(40)");
+            st.execute("ALTER TABLE orders ADD COLUMN IF NOT EXISTS discount NUMERIC(10,2) NOT NULL DEFAULT 0");
+            st.execute("ALTER TABLE orders ADD COLUMN IF NOT EXISTS rating INTEGER");
         }
     }
 
@@ -92,8 +98,8 @@ public class OrderDao {
     public int createOrder(Order order, List<OrderItem> items) throws SQLException {
         final String orderSql =
             "INSERT INTO orders (order_code, user_id, customer_name, tenant_id, address, phone, " +
-            "payment_method, total, status, table_id, table_name) " +
-            "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+            "payment_method, total, status, table_id, table_name, coupon_code, discount) " +
+            "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
         final String itemSql =
             "INSERT INTO order_items (order_id, item_id, item_name, price, quantity) " +
             "VALUES (?, ?, ?, ?, ?)";
@@ -120,6 +126,8 @@ public class OrderDao {
                     ps.setNull(10, java.sql.Types.INTEGER);
                 }
                 ps.setString(11, order.getTableName());
+                ps.setString(12, order.getCouponCode());
+                ps.setDouble(13, order.getDiscount());
                 ps.executeUpdate();
 
                 try (ResultSet keys = ps.getGeneratedKeys()) {
@@ -233,6 +241,10 @@ public class OrderDao {
         int tableId = rs.getInt("table_id");
         o.setTableId(rs.wasNull() ? 0 : tableId);
         o.setTableName(rs.getString("table_name"));
+        o.setCouponCode(rs.getString("coupon_code"));
+        o.setDiscount(rs.getDouble("discount"));
+        int rating = rs.getInt("rating");
+        o.setRating(rs.wasNull() ? null : rating);
         Timestamp ts = rs.getTimestamp("created_at");
         o.setCreatedAt(ts == null ? "" : ts.toString());
         return o;
@@ -384,6 +396,32 @@ public class OrderDao {
             ps.setInt(1, id);
             ps.setInt(2, riderId);
             ps.setString(3, pin);
+            return ps.executeUpdate() == 1;
+        }
+    }
+
+    // ---------------------------------------------------------------
+    // Rating
+    // ---------------------------------------------------------------
+
+    /**
+     * Customer rates their own delivered order (1..5 stars). Ownership- and
+     * state-safe: the WHERE clause restricts to the caller's own order and only
+     * once it is DELIVERED, so a customer can neither rate someone else's order
+     * nor one that hasn't been delivered. Re-rating is allowed (overwrites).
+     *
+     * @return true when the rating was applied.
+     */
+    public boolean rateOrder(int id, int userId, int rating) throws SQLException {
+        if (rating < 1 || rating > 5) return false;
+        final String sql =
+            "UPDATE orders SET rating = ? " +
+            "WHERE id = ? AND user_id = ? AND status = 'DELIVERED'";
+        try (Connection conn = DatabaseManager.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, rating);
+            ps.setInt(2, id);
+            ps.setInt(3, userId);
             return ps.executeUpdate() == 1;
         }
     }

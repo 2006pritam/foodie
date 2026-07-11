@@ -21,7 +21,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Admin Dashboard | Foodie SaaS</title>
-    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/style.css?v=16">
+    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/style.css?v=17">
     <script src="${pageContext.request.contextPath}/assets/js/theme.js?v=2"></script>
 </head>
 <body class="dashboard-page admin-dashboard">
@@ -39,6 +39,7 @@
             <a class="sidebar-link" href="${pageContext.request.contextPath}/admin/tables">Manage Tables</a>
             <a class="sidebar-link" href="${pageContext.request.contextPath}/admin/reservations">Reservations</a>
             <a class="sidebar-link" href="${pageContext.request.contextPath}/admin/complaints">Complaints</a>
+            <a class="sidebar-link" href="${pageContext.request.contextPath}/admin/coupons">Coupons</a>
             <a class="sidebar-link" href="${pageContext.request.contextPath}/admin/users">Manage Users</a>
         </nav>
 
@@ -85,6 +86,11 @@
                         <span class="metric-label">Open Complaints</span>
                         <strong><%= num(request.getAttribute("openComplaints")) %></strong>
                         <small><a href="${pageContext.request.contextPath}/admin/complaints">View all</a></small>
+                    </article>
+                    <article class="metric-card accent-green">
+                        <span class="metric-label">Active Coupons</span>
+                        <strong><%= num(request.getAttribute("activeCoupons")) %></strong>
+                        <small><a href="${pageContext.request.contextPath}/admin/coupons">Manage</a></small>
                     </article>
                 </div>
             </section>

@@ -2,6 +2,7 @@ package com.foodie.web;
 
 import com.foodie.chat.ChatService;
 import com.foodie.db.ComplaintDao;
+import com.foodie.db.CouponDao;
 import com.foodie.db.FeedbackDao;
 import com.foodie.db.ItemDao;
 import com.foodie.db.OrderDao;
@@ -9,6 +10,7 @@ import com.foodie.db.ReservationDao;
 import com.foodie.db.TableDao;
 import com.foodie.db.UserDao;
 import com.foodie.model.Complaint;
+import com.foodie.model.Coupon;
 import com.foodie.model.DiningTable;
 import com.foodie.model.Item;
 import com.foodie.model.Order;
@@ -67,6 +69,7 @@ public class FoodieServlet extends HttpServlet {
     private final ReservationDao reservationDao = new ReservationDao();
     private final FeedbackDao feedbackDao = new FeedbackDao();
     private final ComplaintDao complaintDao = new ComplaintDao();
+    private final CouponDao couponDao = new CouponDao();
 
     // ---------------------------------------------------------------
     // GET
@@ -191,6 +194,12 @@ public class FoodieServlet extends HttpServlet {
                 showAdminComplaints(req, res);
                 return;
 
+            case "/admin/coupons":
+                if (!ensureLoggedIn(req, res)) return;
+                if (!authorizeRole(req, res, "ADMIN")) return;
+                showAdminCoupons(req, res);
+                return;
+
             case "/admin/tables":
                 if (!ensureLoggedIn(req, res)) return;
                 if (!authorizeRole(req, res, "ADMIN")) return;
@@ -235,6 +244,7 @@ public class FoodieServlet extends HttpServlet {
             case "/admin/reservations": handleAdminReservationsPost(req, res); return;
             case "/complaints":         handleComplaintsPost(req, res);        return;
             case "/admin/complaints":   handleAdminComplaintsPost(req, res);   return;
+            case "/admin/coupons":      handleAdminCouponsPost(req, res);      return;
             default:                 handleFeedback(req, res);
         }
     }
@@ -869,6 +879,7 @@ public class FoodieServlet extends HttpServlet {
             req.setAttribute("feedbackCount",  feedbackDao.countAll());
             req.setAttribute("recentFeedback", feedbackDao.findRecent(8));
             req.setAttribute("openComplaints", complaintDao.countByStatus(ComplaintDao.OPEN));
+            req.setAttribute("activeCoupons",  couponDao.countActive());
         } catch (SQLException e) {
             LOGGER.log(Level.SEVERE, "Failed to load admin dashboard metrics", e);
         }
@@ -988,7 +999,96 @@ public class FoodieServlet extends HttpServlet {
             res.sendRedirect(req.getContextPath() + "/menu");
             return;
         }
+        applyCouponAttributes(req);
         forward(req, res, "/WEB-INF/views/checkout.jsp");
+    }
+
+    /**
+     * Resolve the coupon currently held in the session (if any) against the live
+     * cart subtotal, and expose couponCode / couponDiscount / payableTotal to the
+     * checkout view. Re-validated every render so a coupon that no longer applies
+     * (cart shrank below its minimum, expired, deactivated) is quietly dropped.
+     */
+    private void applyCouponAttributes(HttpServletRequest req) {
+        HttpSession session = req.getSession(true);
+        double subtotal = round2(toDouble(req.getAttribute("cartTotal")));
+        String code = (String) session.getAttribute("checkoutCoupon");
+        double discount = 0;
+        String applied = null;
+
+        if (code != null) {
+            try {
+                Coupon c = couponDao.findUsable(code, subtotal);
+                if (c != null) {
+                    discount = round2(c.discountFor(subtotal));
+                    applied = c.getCode();
+                } else {
+                    // No longer valid — forget it so the user isn't misled.
+                    session.removeAttribute("checkoutCoupon");
+                }
+            } catch (SQLException e) {
+                LOGGER.log(Level.WARNING, "Coupon revalidation failed", e);
+                session.removeAttribute("checkoutCoupon");
+            }
+        }
+
+        req.setAttribute("couponCode", applied);
+        req.setAttribute("couponDiscount", discount);
+        req.setAttribute("payableTotal", round2(Math.max(0, subtotal - discount)));
+    }
+
+    /**
+     * Apply or remove a coupon on the checkout screen. Stores just the code in
+     * the session; the actual discount is always recomputed from the DB so it
+     * can't be tampered with. Sets a checkoutMessage for user feedback.
+     */
+    private void handleCouponAction(HttpServletRequest req, String action) {
+        HttpSession session = req.getSession(true);
+        if ("remove_coupon".equals(action)) {
+            session.removeAttribute("checkoutCoupon");
+            req.setAttribute("checkoutMessage", msg("success", "Coupon removed."));
+            return;
+        }
+        // apply_coupon
+        String code = param(req, "coupon_code");
+        if (blank(code)) {
+            req.setAttribute("checkoutMessage", msg("error", "Enter a coupon code."));
+            return;
+        }
+        code = code.trim().toUpperCase();
+        // Compute the subtotal straight from the cart — the cartTotal request
+        // attribute isn't populated yet at this point in the POST flow.
+        double subtotal;
+        try {
+            List<OrderItem> lines = buildCartLines(getCart(session));
+            double t = 0;
+            for (OrderItem line : lines) t += line.getLineTotal();
+            subtotal = round2(t);
+        } catch (SQLException e) {
+            LOGGER.log(Level.SEVERE, "Coupon subtotal calc error", e);
+            req.setAttribute("checkoutMessage", msg("error", "A server error occurred applying the coupon."));
+            return;
+        }
+        try {
+            Coupon c = couponDao.findUsable(code, subtotal);
+            if (c == null) {
+                session.removeAttribute("checkoutCoupon");
+                req.setAttribute("checkoutMessage",
+                    msg("error", "That coupon is invalid, expired, or your order doesn't meet its minimum."));
+            } else {
+                session.setAttribute("checkoutCoupon", c.getCode());
+                req.setAttribute("checkoutMessage",
+                    msg("success", "Coupon " + c.getCode() + " applied — you save Rs "
+                        + String.format("%.2f", c.discountFor(subtotal)) + "."));
+            }
+        } catch (SQLException e) {
+            LOGGER.log(Level.SEVERE, "Coupon apply error", e);
+            req.setAttribute("checkoutMessage", msg("error", "A server error occurred applying the coupon."));
+        }
+    }
+
+    private static double toDouble(Object o) {
+        return o instanceof Number ? ((Number) o).doubleValue() : 0.0;
     }
 
     private void showUserOrders(HttpServletRequest req, HttpServletResponse res)
@@ -1031,6 +1131,18 @@ public class FoodieServlet extends HttpServlet {
                 LOGGER.log(Level.SEVERE, "Order cancel error", e);
                 req.getSession(true).setAttribute("orderFlash",
                     msg("error", "A server error occurred while cancelling your order."));
+            }
+        } else if (orderId > 0 && "rate".equals(action)) {
+            int rating = parseIntSafe(param(req, "rating"), 0);
+            try {
+                boolean rated = orderDao.rateOrder(orderId, userId, rating);
+                req.getSession(true).setAttribute("orderFlash", rated
+                    ? msg("success", "Thanks for rating your order!")
+                    : msg("error", "That order can't be rated yet."));
+            } catch (SQLException e) {
+                LOGGER.log(Level.SEVERE, "Order rating error", e);
+                req.getSession(true).setAttribute("orderFlash",
+                    msg("error", "A server error occurred while saving your rating."));
             }
         }
         res.sendRedirect(req.getContextPath() + "/orders");
@@ -1081,6 +1193,15 @@ public class FoodieServlet extends HttpServlet {
             return;
         }
 
+        // Coupon apply/remove happen inline on the checkout page (not order placement):
+        // stash/clear the code in the session, then re-render checkout with the result.
+        String action = param(req, "action");
+        if ("apply_coupon".equals(action) || "remove_coupon".equals(action)) {
+            handleCouponAction(req, action);
+            showCheckout(req, res);
+            return;
+        }
+
         String address = param(req, "address");
         String phone   = param(req, "phone");
         String payment = param(req, "payment_method");
@@ -1113,6 +1234,21 @@ public class FoodieServlet extends HttpServlet {
 
             double total = 0;
             for (OrderItem line : lines) total += line.getLineTotal();
+            double subtotal = round2(total);
+
+            // Re-validate any applied coupon server-side against the real subtotal;
+            // never trust a client-supplied discount.
+            double discount = 0;
+            String couponCode = null;
+            String sessionCoupon = (String) session.getAttribute("checkoutCoupon");
+            if (sessionCoupon != null) {
+                Coupon c = couponDao.findUsable(sessionCoupon, subtotal);
+                if (c != null) {
+                    discount = round2(c.discountFor(subtotal));
+                    couponCode = c.getCode();
+                }
+            }
+            double payable = round2(Math.max(0, subtotal - discount));
 
             Order order = new Order();
             order.setOrderCode("ORD" + System.currentTimeMillis());
@@ -1122,7 +1258,9 @@ public class FoodieServlet extends HttpServlet {
             order.setAddress(address);
             order.setPhone(phone);
             order.setPaymentMethod(payment);
-            order.setTotal(round2(total));
+            order.setCouponCode(couponCode);
+            order.setDiscount(discount);
+            order.setTotal(payable);
             if (dineIn) {
                 order.setTableId(resvTableId);
                 order.setTableName(resvTableName);
@@ -1132,6 +1270,7 @@ public class FoodieServlet extends HttpServlet {
             int newId = orderDao.createOrder(order, lines);
             if (newId > 0) {
                 cart.clear();
+                session.removeAttribute("checkoutCoupon");
                 if (dineIn) {
                     // Link the order to its reservation and clear the dine-in context.
                     if (resvId > 0) {
@@ -1538,8 +1677,83 @@ public class FoodieServlet extends HttpServlet {
     }
 
     // ---------------------------------------------------------------
-    // User Profile
+    // Admin — Coupons
     // ---------------------------------------------------------------
+
+    private void showAdminCoupons(HttpServletRequest req, HttpServletResponse res)
+            throws ServletException, IOException {
+        HttpSession session = req.getSession(false);
+        Object flash = session == null ? null : session.getAttribute("couponFlash");
+        if (flash != null) {
+            req.setAttribute("adminCouponMessage", flash);
+            session.removeAttribute("couponFlash");
+        }
+        try {
+            req.setAttribute("coupons", couponDao.findAll());
+        } catch (SQLException e) {
+            LOGGER.log(Level.SEVERE, "Failed to load coupons", e);
+            req.setAttribute("adminCouponMessage", msg("error", "Unable to load coupons. Please try again."));
+        }
+        forward(req, res, "/WEB-INF/views/admin/coupons.jsp");
+    }
+
+    /** POST /admin/coupons – create / toggle-active / delete a coupon. */
+    private void handleAdminCouponsPost(HttpServletRequest req, HttpServletResponse res)
+            throws ServletException, IOException {
+        if (!authorizeRole(req, res, "ADMIN")) return;
+
+        String action = param(req, "action");
+        HttpSession session = req.getSession(true);
+        try {
+            if ("create".equals(action)) {
+                String code = param(req, "code");
+                String type = param(req, "type");
+                if (code != null) code = code.trim().toUpperCase();
+                if (!Coupon.PERCENT.equals(type) && !Coupon.FLAT.equals(type)) {
+                    type = Coupon.PERCENT;
+                }
+                double value    = parseDoubleSafe(param(req, "value"), -1);
+                double minOrder = parseDoubleSafe(param(req, "min_order"), 0);
+                String expiry   = param(req, "expiry_date");   // yyyy-MM-dd or blank
+
+                String problem = validateCoupon(code, type, value, minOrder);
+                if (problem != null) {
+                    session.setAttribute("couponFlash", msg("error", problem));
+                } else {
+                    boolean ok = couponDao.create(code, type, value, minOrder,
+                                                  blank(expiry) ? null : expiry);
+                    session.setAttribute("couponFlash", ok
+                        ? msg("success", "Coupon " + code + " created.")
+                        : msg("error", "A coupon with that code already exists."));
+                }
+            } else if ("toggle".equals(action)) {
+                int id = parseIntSafe(param(req, "id"), -1);
+                if (id > 0) couponDao.toggleActive(id);
+            } else if ("delete".equals(action)) {
+                int id = parseIntSafe(param(req, "id"), -1);
+                if (id > 0) couponDao.deleteById(id);
+            }
+        } catch (SQLException e) {
+            LOGGER.log(Level.SEVERE, "Admin coupon error", e);
+            session.setAttribute("couponFlash", msg("error", "A server error occurred. Please try again."));
+        }
+        res.sendRedirect(req.getContextPath() + "/admin/coupons");
+    }
+
+    /** Validate coupon creation inputs; returns an error message or null when valid. */
+    private String validateCoupon(String code, String type, double value, double minOrder) {
+        if (blank(code)) return "Coupon code is required.";
+        if (!code.matches("[A-Z0-9_-]{3,40}")) {
+            return "Code must be 3–40 characters: letters, digits, '-' or '_'.";
+        }
+        if (value <= 0) return "Discount value must be greater than zero.";
+        if (Coupon.PERCENT.equals(type) && value > 100) {
+            return "A percentage discount cannot exceed 100%.";
+        }
+        if (minOrder < 0) return "Minimum order cannot be negative.";
+        return null;
+    }
+
 
     /** Show the user's profile page with current details and forms to update them. */
     private void showProfile(HttpServletRequest req, HttpServletResponse res)
@@ -1744,6 +1958,14 @@ public class FoodieServlet extends HttpServlet {
     private static int parseIntSafe(String v, int fallback) {
         try {
             return Integer.parseInt(v.trim());
+        } catch (NumberFormatException | NullPointerException e) {
+            return fallback;
+        }
+    }
+
+    private static double parseDoubleSafe(String v, double fallback) {
+        try {
+            return Double.parseDouble(v.trim());
         } catch (NumberFormatException | NullPointerException e) {
             return fallback;
         }

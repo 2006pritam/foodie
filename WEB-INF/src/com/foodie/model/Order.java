@@ -19,6 +19,9 @@ public class Order {
     private String deliveryPin;   // 4-digit PIN assigned when the admin accepts the order
     private int tableId;          // 0 when the order is not tied to a table reservation
     private String tableName;     // dine-in table name/number shown on the bill (null for delivery)
+    private String couponCode;    // applied coupon code, null if none
+    private double discount;      // Rs discount applied by the coupon (0 if none)
+    private Integer rating;       // 1..5 star rating the customer left after delivery, null until rated
     private String createdAt;
     private List<OrderItem> items = new ArrayList<>();
 
@@ -142,6 +145,30 @@ public class Order {
 
     public void setTableName(String tableName) {
         this.tableName = tableName;
+    }
+
+    public String getCouponCode() {
+        return couponCode;
+    }
+
+    public void setCouponCode(String couponCode) {
+        this.couponCode = couponCode;
+    }
+
+    public double getDiscount() {
+        return discount;
+    }
+
+    public void setDiscount(double discount) {
+        this.discount = discount;
+    }
+
+    public Integer getRating() {
+        return rating;
+    }
+
+    public void setRating(Integer rating) {
+        this.rating = rating;
     }
 
     public String getCreatedAt() {

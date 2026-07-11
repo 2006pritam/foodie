@@ -2818,6 +2818,73 @@ html[data-theme="dark"] .menu-search-input {
 .summary-list li { display: flex; justify-content: space-between; gap: 16px; }
 .summary-list li strong { color: var(--rich-black-fogra-29); }
 
+/* Checkout coupon box */
+.coupon-box { margin: 4px 0 16px; }
+.coupon-form { display: flex; gap: 8px; }
+.coupon-form input {
+  flex: 1 1 auto;
+  padding: 10px 12px;
+  border: 1px dashed var(--deep-saffron);
+  border-radius: 12px;
+  background-color: var(--white);
+  color: var(--rich-black-fogra-29);
+  text-transform: uppercase;
+}
+.coupon-form input::placeholder { text-transform: none; color: var(--spanish-gray); }
+.coupon-applied {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 14px;
+  border-radius: 12px;
+  background: rgba(52, 211, 153, 0.14);
+  border: 1px solid rgba(5, 150, 105, 0.35);
+  color: #047857;
+}
+.coupon-remove {
+  border: none;
+  background: transparent;
+  color: #047857;
+  font-size: 2rem;
+  line-height: 1;
+  cursor: pointer;
+  padding: 0 4px;
+}
+.order-summary-row.discount-row { color: #047857; font-size: 1.6rem; }
+html[data-theme="dark"] .coupon-form input { background-color: #131a24; color: #e8edf5; }
+html[data-theme="dark"] .coupon-applied { background: rgba(52, 211, 153, 0.12); color: #6ee7b7; }
+html[data-theme="dark"] .coupon-remove { color: #6ee7b7; }
+
+/* Order rating (stars) */
+.order-rating {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-top: 14px;
+  padding-top: 14px;
+  border-top: 1px solid var(--gainsboro);
+}
+.rating-label { color: var(--spanish-gray); font-size: 1.5rem; }
+.rating-stars { display: inline-flex; gap: 4px; }
+.rating-stars .star {
+  font-size: 2.4rem;
+  line-height: 1;
+  color: #d5d9e0;
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  transition: color 0.15s ease, transform 0.15s ease;
+}
+.rating-stars.input .star:hover { transform: scale(1.15); }
+.rating-stars .star.filled { color: #f5c518; }
+.rating-stars.readonly .star { cursor: default; }
+html[data-theme="dark"] .rating-stars .star { color: #3a4354; }
+html[data-theme="dark"] .rating-stars .star.filled { color: #f5c518; }
+html[data-theme="dark"] .order-rating { border-top-color: #2b3546; }
+
 /* Order tracking cards */
 .order-card { margin-bottom: 20px; }
 .order-card-header { display: flex; justify-content: space-between; align-items: flex-start; }
@@ -3545,7 +3612,6 @@ html[data-theme="dark"] .header.active .navbar-link { color: #cbd4e1; }
 /*-----------------------------------*\
   #PAGE LOADER
 \*-----------------------------------*/
-
 /* Full-screen overlay shown during page navigation (injected by theme.js).
    Because it lives on the page being left, it also covers the wait for slow
    destinations (e.g. the admin dashboard) and the /*.jsp redirect hop. */

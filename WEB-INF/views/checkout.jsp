@@ -7,7 +7,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Checkout | Foodie</title>
-    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/style.css?v=16">
+    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/style.css?v=17">
     <script src="${pageContext.request.contextPath}/assets/js/theme.js?v=2"></script>
 </head>
 <body class="dashboard-page checkout-page">
@@ -34,6 +34,12 @@
         String ctx = request.getContextPath();
         String dineInTable = (String) session.getAttribute("resvTableName");
         boolean dineIn = dineInTable != null;
+        double subtotal = totalObj == null ? 0.0 : (Double) totalObj;
+        String couponCode = (String) request.getAttribute("couponCode");
+        Object discObj = request.getAttribute("couponDiscount");
+        double couponDiscount = discObj == null ? 0.0 : (Double) discObj;
+        Object payObj = request.getAttribute("payableTotal");
+        double payable = payObj == null ? subtotal : (Double) payObj;
     %>
 
     <section class="checkout-layout">
@@ -90,9 +96,39 @@
                     </li>
                 <% } } %>
             </ul>
+
+            <div class="coupon-box">
+                <% if (couponCode != null) { %>
+                    <div class="coupon-applied">
+                        <span>Coupon <strong><%= couponCode %></strong> applied</span>
+                        <form method="post" action="<%= ctx %>/checkout" class="inline-form">
+                            <input type="hidden" name="action" value="remove_coupon" />
+                            <button type="submit" class="coupon-remove" title="Remove coupon">&times;</button>
+                        </form>
+                    </div>
+                <% } else { %>
+                    <form method="post" action="<%= ctx %>/checkout" class="coupon-form">
+                        <input type="hidden" name="action" value="apply_coupon" />
+                        <input type="text" name="coupon_code" placeholder="Have a coupon? Enter code"
+                               autocomplete="off" />
+                        <button type="submit" class="button small">Apply</button>
+                    </form>
+                <% } %>
+            </div>
+
+            <div class="order-summary-row">
+                <span>Subtotal</span>
+                <span>Rs <%= String.format("%.2f", subtotal) %></span>
+            </div>
+            <% if (couponDiscount > 0) { %>
+                <div class="order-summary-row discount-row">
+                    <span>Discount<%= couponCode != null ? " (" + couponCode + ")" : "" %></span>
+                    <span>&minus; Rs <%= String.format("%.2f", couponDiscount) %></span>
+                </div>
+            <% } %>
             <div class="order-summary-row total">
                 <span>Total</span>
-                <strong>Rs <%= String.format("%.2f", totalObj == null ? 0.0 : (Double) totalObj) %></strong>
+                <strong>Rs <%= String.format("%.2f", payable) %></strong>
             </div>
         </aside>
     </section>

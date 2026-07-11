@@ -42,7 +42,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>My Orders | Foodie</title>
-    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/style.css?v=16">
+    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/style.css?v=17">
     <script src="${pageContext.request.contextPath}/assets/js/theme.js?v=2"></script>
 </head>
 <body class="dashboard-page orders-page">
@@ -132,6 +132,9 @@
                 <% if (o.getRiderName() != null && !o.getRiderName().isEmpty()) { %>
                     <span>Rider: <strong><%= o.getRiderName() %></strong></span>
                 <% } %>
+                <% if (o.getDiscount() > 0) { %>
+                    <span>Saved: <strong>Rs <%= String.format("%.2f", o.getDiscount()) %></strong><%= o.getCouponCode() != null ? " (" + esc(o.getCouponCode()) + ")" : "" %></span>
+                <% } %>
                 <span class="order-total">Total: <strong>Rs <%= String.format("%.2f", o.getTotal()) %></strong></span>
                 <button type="button" class="button small" onclick="openReceipt('<%= esc(o.getOrderCode()) %>')">Print receipt</button>
                 <% if (cancellable(o.getStatus())) { %>
@@ -143,6 +146,35 @@
                     </form>
                 <% } %>
             </div>
+
+            <%
+                // Rating widget appears only once the order is delivered.
+                if ("DELIVERED".equals(o.getStatus())) {
+                    Integer rated = o.getRating();
+            %>
+                <div class="order-rating">
+                    <% if (rated != null) { %>
+                        <span class="rating-label">Your rating:</span>
+                        <span class="rating-stars readonly">
+                            <% for (int s = 1; s <= 5; s++) { %>
+                                <span class="star <%= s <= rated ? "filled" : "" %>">&#9733;</span>
+                            <% } %>
+                        </span>
+                    <% } else { %>
+                        <span class="rating-label">Rate your order:</span>
+                        <form method="post" action="${pageContext.request.contextPath}/orders" class="rating-form">
+                            <input type="hidden" name="action" value="rate" />
+                            <input type="hidden" name="orderId" value="<%= o.getId() %>" />
+                            <input type="hidden" name="rating" value="" />
+                            <span class="rating-stars input">
+                                <% for (int s = 1; s <= 5; s++) { %>
+                                    <button type="button" class="star" data-value="<%= s %>" aria-label="<%= s %> star">&#9733;</button>
+                                <% } %>
+                            </span>
+                        </form>
+                    <% } %>
+                </div>
+            <% } %>
         </section>
 
         <!-- Printable invoice for <%= esc(o.getOrderCode()) %> -->
@@ -183,8 +215,16 @@
                     </tbody>
                 </table>
                 <div class="r-line"></div>
-                <div class="receipt-row"><span>Subtotal:</span><span>Rs <%= String.format("%.2f", o.getTotal()) %></span></div>
-                <div class="receipt-total-row"><span>TOTAL</span><span>Rs <%= String.format("%.2f", o.getTotal()) %></span></div>
+                <%
+                    double grandTotal = o.getTotal();
+                    double disc = o.getDiscount();
+                    double sub = grandTotal + disc;   // total is already net of discount
+                %>
+                <div class="receipt-row"><span>Subtotal:</span><span>Rs <%= String.format("%.2f", sub) %></span></div>
+                <% if (disc > 0) { %>
+                    <div class="receipt-row"><span>Discount<%= o.getCouponCode() != null ? " (" + esc(o.getCouponCode()) + ")" : "" %>:</span><span>- Rs <%= String.format("%.2f", disc) %></span></div>
+                <% } %>
+                <div class="receipt-total-row"><span>TOTAL</span><span>Rs <%= String.format("%.2f", grandTotal) %></span></div>
                 <div class="receipt-footer">
                     Thank you for your order!<br>Please keep this receipt for reference.
                 </div>
@@ -219,6 +259,28 @@
     (function () {
         var m = window.location.search.match(/[?&]placed=([^&]+)/);
         if (m) openReceipt(decodeURIComponent(m[1]));
+    })();
+
+    // Star rating: hover previews, click sets value and submits.
+    (function () {
+        var groups = document.querySelectorAll('.rating-stars.input');
+        groups.forEach(function (group) {
+            var stars = group.querySelectorAll('.star');
+            var form = group.closest('.rating-form');
+            function paint(upto) {
+                stars.forEach(function (st, i) {
+                    st.classList.toggle('filled', i < upto);
+                });
+            }
+            stars.forEach(function (st, i) {
+                st.addEventListener('mouseenter', function () { paint(i + 1); });
+                st.addEventListener('click', function () {
+                    form.querySelector('input[name="rating"]').value = st.getAttribute('data-value');
+                    form.submit();
+                });
+            });
+            group.addEventListener('mouseleave', function () { paint(0); });
+        });
     })();
 </script>
 
