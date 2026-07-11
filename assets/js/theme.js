@@ -89,7 +89,9 @@
     overlay.setAttribute('aria-hidden', 'true');
     overlay.innerHTML =
       '<div class="page-loader-spinner"></div>' +
-      '<div class="page-loader-label">Loading…</div>';
+      // Use a \u escape (pure ASCII source) so the ellipsis renders correctly
+      // regardless of the charset Tomcat serves this .js file with.
+      '<div class="page-loader-label">Loading\u2026</div>';
     document.body.appendChild(overlay);
     return overlay;
   }
