@@ -2818,6 +2818,96 @@ html[data-theme="dark"] .menu-search-input {
 .summary-list li { display: flex; justify-content: space-between; gap: 16px; }
 .summary-list li strong { color: var(--rich-black-fogra-29); }
 
+/* UPI mock-payment modal */
+.upi-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 2600;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  background: rgba(6, 9, 15, 0.62);
+  -webkit-backdrop-filter: blur(3px);
+  backdrop-filter: blur(3px);
+}
+.upi-overlay.open { display: flex; }
+.upi-modal {
+  position: relative;
+  width: 100%;
+  max-width: 460px;
+  background: var(--white);
+  border-radius: 20px;
+  padding: 26px;
+  box-shadow: 0 30px 80px rgba(0, 0, 0, 0.4);
+  color: var(--rich-black-fogra-29);
+}
+.upi-close {
+  position: absolute;
+  top: 14px;
+  right: 16px;
+  border: none;
+  background: none;
+  font-size: 2.4rem;
+  line-height: 1;
+  color: var(--spanish-gray);
+  cursor: pointer;
+}
+.upi-head { text-align: center; margin-bottom: 18px; }
+.upi-head h2 { margin: 0; color: var(--rich-black-fogra-29); }
+.upi-head p { color: var(--deep-saffron); font-weight: 600; }
+.upi-body { display: flex; flex-direction: column; align-items: center; gap: 16px; }
+.upi-qr {
+  width: 212px;
+  height: 212px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 6px;
+  background: #ffffff;
+  border: 1px solid var(--gainsboro);
+  border-radius: 14px;
+}
+.upi-qr img, .upi-qr canvas { display: block; }
+.upi-qr-loading { font-size: 1.4rem; color: var(--spanish-gray); }
+.upi-details { width: 100%; text-align: center; display: grid; gap: 8px; }
+.upi-amount { font-size: 1.9rem; }
+.upi-amount strong, .upi-vpa strong { color: var(--deep-saffron); }
+.upi-vpa { font-size: 1.5rem; }
+.upi-timer {
+  font-size: 2.6rem;
+  font-weight: 700;
+  letter-spacing: 1px;
+  color: var(--rich-black-fogra-29);
+}
+.upi-timer.urgent { color: #dc2626; }
+.upi-upload {
+  display: block;
+  padding: 12px;
+  border: 1px dashed var(--deep-saffron);
+  border-radius: 12px;
+  cursor: pointer;
+  font-size: 1.4rem;
+  color: var(--rich-black-fogra-29);
+}
+.upi-upload input[type="file"] { display: block; margin-top: 8px; width: 100%; }
+.upi-result { text-align: center; gap: 12px; padding: 10px 0; }
+.upi-result-icon {
+  width: 72px; height: 72px; line-height: 72px;
+  border-radius: 50%;
+  font-size: 3rem;
+  color: #ffffff;
+}
+.upi-result.is-ok .upi-result-icon { background: #16a34a; }
+.upi-result.is-fail .upi-result-icon { background: #dc2626; }
+.upi-result h3 { margin: 0; }
+.upi-result.is-fail h3 { color: #dc2626; }
+html[data-theme="dark"] .upi-modal { background: #171e28; color: #e8edf5; }
+html[data-theme="dark"] .upi-head h2,
+html[data-theme="dark"] .upi-timer { color: #e8edf5; }
+html[data-theme="dark"] .upi-upload { color: #e8edf5; }
+.upi-proof-link { color: var(--deep-saffron); font-size: 1.3rem; text-decoration: underline; }
+
 /* Checkout coupon box */
 .coupon-box { margin: 4px 0 16px; }
 .coupon-form { display: flex; gap: 8px; }

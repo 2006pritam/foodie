@@ -21,6 +21,7 @@ public class Order {
     private String tableName;     // dine-in table name/number shown on the bill (null for delivery)
     private String couponCode;    // applied coupon code, null if none
     private double discount;      // Rs discount applied by the coupon (0 if none)
+    private String paymentProof;  // uploaded UPI payment screenshot path, null for CARD/COD
     private Integer rating;       // 1..5 star rating the customer left after delivery, null until rated
     private String createdAt;
     private List<OrderItem> items = new ArrayList<>();
@@ -161,6 +162,14 @@ public class Order {
 
     public void setDiscount(double discount) {
         this.discount = discount;
+    }
+
+    public String getPaymentProof() {
+        return paymentProof;
+    }
+
+    public void setPaymentProof(String paymentProof) {
+        this.paymentProof = paymentProof;
     }
 
     public Integer getRating() {

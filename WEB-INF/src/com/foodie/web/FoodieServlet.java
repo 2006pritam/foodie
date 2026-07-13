@@ -710,6 +710,10 @@ public class FoodieServlet extends HttpServlet {
     }
 
     private String saveUploadedFile(Part part, HttpServletRequest req) throws IOException {
+        return saveUploadedFile(part, req, "assets/images/items");
+    }
+
+    private String saveUploadedFile(Part part, HttpServletRequest req, String relativeDir) throws IOException {
         String filename = getSubmittedFileName(part);
         if (filename == null || filename.isBlank()) {
             throw new IOException("No file name present.");
@@ -722,7 +726,6 @@ public class FoodieServlet extends HttpServlet {
         }
 
         String savedName = System.currentTimeMillis() + "_" + Math.abs(filename.hashCode()) + extension;
-        String relativeDir = "assets/images/items";
         String uploadPath = req.getServletContext().getRealPath(relativeDir);
         if (uploadPath == null) {
             throw new IOException("Unable to resolve upload directory.");
@@ -1223,6 +1226,28 @@ public class FoodieServlet extends HttpServlet {
             return;
         }
 
+        // UPI: a payment screenshot must be uploaded (the front-end enforces the
+        // 60s window; the server enforces that proof is actually present).
+        String paymentProof = null;
+        if ("UPI".equals(payment)) {
+            try {
+                Part proofPart = req.getPart("payment_proof");
+                if (proofPart == null || getSubmittedFileName(proofPart).isBlank()) {
+                    req.setAttribute("checkoutMessage",
+                        msg("error", "UPI payment failed — please scan the QR and upload your payment screenshot."));
+                    showCheckout(req, res);
+                    return;
+                }
+                paymentProof = saveUploadedFile(proofPart, req, "assets/images/payments");
+            } catch (IOException e) {
+                LOGGER.log(Level.SEVERE, "Failed to save UPI payment screenshot", e);
+                req.setAttribute("checkoutMessage",
+                    msg("error", "We couldn't save your payment screenshot. Please try again."));
+                showCheckout(req, res);
+                return;
+            }
+        }
+
         try {
             // Re-price every line from the database — never trust cart-side prices.
             List<OrderItem> lines = buildCartLines(cart);
@@ -1260,6 +1285,7 @@ public class FoodieServlet extends HttpServlet {
             order.setPaymentMethod(payment);
             order.setCouponCode(couponCode);
             order.setDiscount(discount);
+            order.setPaymentProof(paymentProof);
             order.setTotal(payable);
             if (dineIn) {
                 order.setTableId(resvTableId);

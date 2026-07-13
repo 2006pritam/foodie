@@ -16,7 +16,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Manage Orders | Foodie Admin</title>
-    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/style.css?v=17">
+    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/style.css?v=18">
     <script src="${pageContext.request.contextPath}/assets/js/theme.js?v=2"></script>
 </head>
 <body class="dashboard-page admin-orders-page">
@@ -77,7 +77,11 @@
                             <% } %>
                         </ul>
                     </td>
-                    <td>Rs <%= String.format("%.2f", o.getTotal()) %></td>
+                    <td>Rs <%= String.format("%.2f", o.getTotal()) %>
+                        <% if (o.getPaymentProof() != null && !o.getPaymentProof().isEmpty()) { %>
+                            <br><a class="upi-proof-link" href="<%= ctx %>/<%= o.getPaymentProof() %>" target="_blank" rel="noopener">UPI proof</a>
+                        <% } %>
+                    </td>
                     <td><%= o.getAddress() == null ? "" : o.getAddress() %><br><small><%= o.getPhone() == null ? "" : o.getPhone() %></small></td>
                     <td><span class="order-badge <%= badgeClass(o.getStatus()) %>"><%= label(o.getStatus()) %></span></td>
                     <td><%= o.getRiderName() == null ? "&mdash;" : o.getRiderName() %></td>
