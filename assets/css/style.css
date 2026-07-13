@@ -2908,6 +2908,64 @@ html[data-theme="dark"] .upi-timer { color: #e8edf5; }
 html[data-theme="dark"] .upi-upload { color: #e8edf5; }
 .upi-proof-link { color: var(--deep-saffron); font-size: 1.3rem; text-decoration: underline; }
 
+/* Admin payment proof (orders page) */
+.payment-cell { white-space: nowrap; }
+.pay-method { font-weight: 600; }
+.pay-noproof { color: #dc2626; font-size: 1.2rem; }
+.pay-proof-thumb {
+  width: 54px;
+  height: 54px;
+  object-fit: cover;
+  border-radius: 10px;
+  border: 1px solid var(--gainsboro);
+  cursor: pointer;
+  margin-top: 6px;
+  transition: transform 0.12s ease;
+}
+.pay-proof-thumb:hover { transform: scale(1.06); }
+.proof-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 2600;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  background: rgba(6, 10, 18, 0.78);
+}
+.proof-overlay.open { display: flex; }
+.proof-modal {
+  position: relative;
+  max-width: 460px;
+  width: 100%;
+  background: var(--white);
+  color: var(--rich-black-fogra-29);
+  border-radius: 18px;
+  padding: 22px;
+  text-align: center;
+  box-shadow: 0 30px 80px rgba(0, 0, 0, 0.45);
+}
+.proof-modal h3 { margin-bottom: 12px; color: var(--rich-black-fogra-29); }
+.proof-modal img {
+  max-width: 100%;
+  max-height: 70vh;
+  border-radius: 12px;
+  border: 1px solid var(--gainsboro);
+}
+.proof-close {
+  position: absolute;
+  top: 12px;
+  right: 14px;
+  border: none;
+  background: transparent;
+  font-size: 2.2rem;
+  line-height: 1;
+  cursor: pointer;
+  color: var(--spanish-gray);
+}
+html[data-theme="dark"] .proof-modal { background: #171e28; color: #e6ebf4; }
+html[data-theme="dark"] .proof-modal h3 { color: #e6ebf4; }
+
 /* Checkout coupon box */
 .coupon-box { margin: 4px 0 16px; }
 .coupon-form { display: flex; gap: 8px; }
