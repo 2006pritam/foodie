@@ -84,7 +84,8 @@
                     Choosing UPI? You'll scan a QR and upload your payment screenshot within 2 minutes.
                 </div>
                 <!-- Screenshot chosen inside the UPI modal is carried here on submit. -->
-                <input type="file" name="payment_proof" id="paymentProofInput" accept="image/*" hidden />
+                <input type="file" name="payment_proof" id="paymentProofInput" accept="image/*"
+                       hidden style="display:none !important;" />
                 <button type="submit" class="button" id="placeOrderBtn">Place order</button>
             </form>
         </div>
