@@ -81,7 +81,7 @@
                     <p class="hint">This is a mock payment step — no real charge is made.</p>
                 </div>
                 <div id="upiHint" class="hint" style="display:none;">
-                    Choosing UPI? You'll scan a QR and upload your payment screenshot within 60 seconds.
+                    Choosing UPI? You'll scan a QR and upload your payment screenshot within 2 minutes.
                 </div>
                 <!-- Screenshot chosen inside the UPI modal is carried here on submit. -->
                 <input type="file" name="payment_proof" id="paymentProofInput" accept="image/*" hidden />
@@ -139,7 +139,7 @@
     </section>
 </div>
 
-<!-- UPI mock-payment modal: QR + 60s timer + screenshot upload -->
+<!-- UPI mock-payment modal: QR + 120s timer + screenshot upload -->
 <div class="upi-overlay" id="upiOverlay" role="dialog" aria-modal="true" aria-labelledby="upiTitle">
     <div class="upi-modal">
         <button type="button" class="upi-close" aria-label="Cancel payment" onclick="upiCancel()">&times;</button>
@@ -153,7 +153,7 @@
             <div class="upi-details">
                 <div class="upi-amount">Amount: <strong>Rs <%= String.format("%.2f", payable) %></strong></div>
                 <div class="upi-vpa">UPI ID: <strong>9064662830-1@naviaxis</strong></div>
-                <div class="upi-timer" id="upiTimer">01:00</div>
+                <div class="upi-timer" id="upiTimer">02:00</div>
                 <p class="hint">Scan the QR with any UPI app, pay, then upload your payment screenshot below before the timer runs out.</p>
                 <label class="upi-upload">
                     <span id="upiUploadText">Upload payment screenshot</span>
@@ -223,7 +223,7 @@
             submitBtn.disabled = true;
             overlay.classList.add('open');
             renderQr();
-            startTimer(60);
+            startTimer(120);
         }
 
         function renderQr() {
