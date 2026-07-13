@@ -2966,6 +2966,20 @@ html[data-theme="dark"] .upi-upload { color: #e8edf5; }
 html[data-theme="dark"] .proof-modal { background: #171e28; color: #e6ebf4; }
 html[data-theme="dark"] .proof-modal h3 { color: #e6ebf4; }
 
+/* Payment tag (rider dashboard) — COD = collect cash, CARD/UPI = prepaid */
+.pay-tag {
+  display: inline-block;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 1.2rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+.pay-tag.cod  { background: rgba(245, 158, 11, 0.16); color: #b45309; }
+.pay-tag.paid { background: rgba(5, 150, 105, 0.16);  color: #047857; }
+html[data-theme="dark"] .pay-tag.cod  { background: rgba(245, 158, 11, 0.18); color: #fbbf24; }
+html[data-theme="dark"] .pay-tag.paid { background: rgba(5, 150, 105, 0.18);  color: #6ee7b7; }
+
 /* Checkout coupon box */
 .coupon-box { margin: 4px 0 16px; }
 .coupon-form { display: flex; gap: 8px; }

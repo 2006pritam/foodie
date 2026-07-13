@@ -9,6 +9,17 @@
         if ("PICKED_UP".equals(status)) return "Picked up";
         return status.charAt(0) + status.substring(1).toLowerCase();
     }
+    // Rider-facing payment note: COD means collect cash on delivery; CARD/UPI are prepaid.
+    String payNote(String method) {
+        if (method == null) return "—";
+        switch (method.toUpperCase()) {
+            case "COD":  return "Cash on Delivery";
+            case "CARD": return "Card (Paid)";
+            case "UPI":  return "UPI (Paid)";
+            default:     return method;
+        }
+    }
+    boolean isCod(String method) { return "COD".equalsIgnoreCase(method); }
 %>
 <!DOCTYPE html>
 <html lang="en">
@@ -16,7 +27,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Rider Dashboard | Foodie</title>
-    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/style.css?v=19">
+    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/style.css?v=20">
     <script src="${pageContext.request.contextPath}/assets/js/theme.js?v=2"></script>
 </head>
 <body class="dashboard-page rider-dashboard">
@@ -50,13 +61,13 @@
         </div>
         <table class="data-table">
             <thead>
-            <tr><th>Code</th><th>Customer</th><th>Items</th><th>Total</th><th>Address</th><th>Action</th></tr>
+            <tr><th>Code</th><th>Customer</th><th>Items</th><th>Total</th><th>Payment</th><th>Address</th><th>Action</th></tr>
             </thead>
             <tbody>
             <%
                 if (availableOrders == null || availableOrders.isEmpty()) {
             %>
-                <tr><td colspan="6" class="empty-state">No orders are waiting for pickup right now.</td></tr>
+                <tr><td colspan="7" class="empty-state">No orders are waiting for pickup right now.</td></tr>
             <%
                 } else {
                     for (Order o : availableOrders) {
@@ -72,6 +83,7 @@
                         </ul>
                     </td>
                     <td>Rs <%= String.format("%.2f", o.getTotal()) %></td>
+                    <td><span class="pay-tag <%= isCod(o.getPaymentMethod()) ? "cod" : "paid" %>"><%= payNote(o.getPaymentMethod()) %></span></td>
                     <td><%= o.getAddress() == null ? "" : o.getAddress() %><br><small><%= o.getPhone() == null ? "" : o.getPhone() %></small></td>
                     <td>
                         <form class="inline-form" method="post" action="<%= ctx %>/rider/orders">
@@ -96,13 +108,13 @@
         </div>
         <table class="data-table">
             <thead>
-            <tr><th>Code</th><th>Customer</th><th>Address</th><th>Total</th><th>Status</th><th>Action</th></tr>
+            <tr><th>Code</th><th>Customer</th><th>Address</th><th>Total</th><th>Payment</th><th>Status</th><th>Action</th></tr>
             </thead>
             <tbody>
             <%
                 if (myOrders == null || myOrders.isEmpty()) {
             %>
-                <tr><td colspan="6" class="empty-state">You have no active deliveries.</td></tr>
+                <tr><td colspan="7" class="empty-state">You have no active deliveries.</td></tr>
             <%
                 } else {
                     for (Order o : myOrders) {
@@ -112,6 +124,7 @@
                     <td><%= o.getCustomerName() == null ? "" : o.getCustomerName() %></td>
                     <td><%= o.getAddress() == null ? "" : o.getAddress() %><br><small><%= o.getPhone() == null ? "" : o.getPhone() %></small></td>
                     <td>Rs <%= String.format("%.2f", o.getTotal()) %></td>
+                    <td><span class="pay-tag <%= isCod(o.getPaymentMethod()) ? "cod" : "paid" %>"><%= payNote(o.getPaymentMethod()) %></span></td>
                     <td><span class="order-badge <%= badgeClass(o.getStatus()) %>"><%= label(o.getStatus()) %></span></td>
                     <td>
                         <% if ("PICKED_UP".equals(o.getStatus())) { %>

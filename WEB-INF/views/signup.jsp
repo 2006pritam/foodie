@@ -8,7 +8,7 @@
   <title>Sign Up - Foodie</title>
 
   <link rel="shortcut icon" href="./favicon.svg" type="image/svg+xml">
-  <link rel="stylesheet" href="./assets/css/style.css?v=19">
+  <link rel="stylesheet" href="./assets/css/style.css?v=20">
   <script src="./assets/js/theme.js?v=2"></script>
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
