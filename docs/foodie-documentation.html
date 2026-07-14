@@ -1,0 +1,972 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Foodie — Full Project Documentation</title>
+<style>
+  :root{
+    --ink:#1a1a2e; --muted:#5a5a72; --line:#d8d8e4; --accent:#d1410c;
+    --accent2:#0b6e4f; --bg-soft:#f7f7fb; --code-bg:#f4f4f9; --kbd:#ececf5;
+  }
+  *{box-sizing:border-box;}
+  html{-webkit-print-color-adjust:exact; print-color-adjust:exact;}
+  body{
+    font-family:"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    color:var(--ink); line-height:1.55; margin:0; font-size:12px;
+  }
+  .page{max-width:820px; margin:0 auto; padding:32px 40px;}
+
+  /* Cover */
+  .cover{
+    min-height:96vh; display:flex; flex-direction:column; justify-content:center;
+    align-items:center; text-align:center; page-break-after:always;
+    background:linear-gradient(135deg,#d1410c 0%,#8f1d02 100%); color:#fff;
+    border-radius:0;
+  }
+  .cover h1{font-size:52px; margin:0 0 6px; letter-spacing:-1px;}
+  .cover .tag{font-size:18px; opacity:.92; margin:0 0 28px;}
+  .cover .badge{
+    display:inline-block; border:1px solid rgba(255,255,255,.5);
+    padding:6px 14px; border-radius:999px; font-size:12px; margin:4px;
+  }
+  .cover .meta{margin-top:34px; font-size:13px; opacity:.9;}
+
+  h1,h2,h3,h4{line-height:1.25; color:var(--ink);}
+  h2{
+    font-size:24px; border-bottom:3px solid var(--accent); padding-bottom:6px;
+    margin-top:38px; page-break-after:avoid;
+  }
+  h3{font-size:17px; color:var(--accent); margin-top:26px; page-break-after:avoid;}
+  h4{font-size:14px; margin-top:18px; page-break-after:avoid;}
+  section{page-break-inside:auto;}
+
+  p{margin:8px 0;}
+  code{
+    font-family:"Consolas","Courier New",monospace; background:var(--code-bg);
+    padding:1px 5px; border-radius:4px; font-size:11px; color:#b5330a;
+  }
+  pre{
+    background:#1e1e2e; color:#e6e6f0; padding:14px 16px; border-radius:8px;
+    overflow-x:auto; font-size:10.5px; line-height:1.5; page-break-inside:avoid;
+    border:1px solid #2d2d44;
+  }
+  pre code{background:none; color:inherit; padding:0; font-size:10.5px;}
+  .sql{color:#e6e6f0;}
+
+  table{border-collapse:collapse; width:100%; margin:12px 0; font-size:11px; page-break-inside:auto;}
+  th,td{border:1px solid var(--line); padding:6px 9px; text-align:left; vertical-align:top;}
+  th{background:var(--accent); color:#fff; font-weight:600;}
+  tr:nth-child(even) td{background:var(--bg-soft);}
+  tbody tr{page-break-inside:avoid;}
+
+  .note{
+    background:#fff7ed; border-left:4px solid var(--accent); padding:10px 14px;
+    margin:12px 0; border-radius:0 6px 6px 0; font-size:11.5px;
+  }
+  .tip{
+    background:#ecfdf5; border-left:4px solid var(--accent2); padding:10px 14px;
+    margin:12px 0; border-radius:0 6px 6px 0; font-size:11.5px;
+  }
+  .qa{margin:10px 0 14px; page-break-inside:avoid;}
+  .qa .q{font-weight:700; color:var(--accent2);}
+  .qa .a{margin:3px 0 0; padding-left:14px; border-left:2px solid var(--line);}
+
+  ul,ol{margin:8px 0; padding-left:22px;}
+  li{margin:3px 0;}
+
+  .toc{columns:2; column-gap:30px; font-size:11.5px;}
+  .toc a{color:var(--ink); text-decoration:none;}
+  .toc ol{padding-left:18px;}
+
+  .kv{width:100%;}
+  .kv td:first-child{width:200px; font-weight:600; background:var(--bg-soft);}
+
+  .pill{display:inline-block;background:var(--kbd);border-radius:4px;padding:1px 7px;font-size:10.5px;margin:1px;}
+  .footer-note{color:var(--muted); font-size:10px; text-align:center; margin-top:40px;}
+  @media print{
+    .page{padding:0 8px;}
+    h2{margin-top:26px;}
+    a{color:var(--ink); text-decoration:none;}
+  }
+</style>
+</head>
+<body>
+
+<!-- ============ COVER ============ -->
+<div class="cover">
+  <h1>🍔 FOODIE</h1>
+  <p class="tag">Online Food Ordering &amp; Restaurant Management System</p>
+  <div>
+    <span class="badge">Java Servlets &amp; JSP</span>
+    <span class="badge">Apache Tomcat 9</span>
+    <span class="badge">PostgreSQL (Neon)</span>
+    <span class="badge">JDBC</span>
+    <span class="badge">MVC Architecture</span>
+  </div>
+  <div class="meta">
+    <strong>Full Project Documentation &amp; Viva Guide</strong><br>
+    Complete walkthrough · Architecture · Database · Code · Commands · 60+ Viva Q&amp;A
+  </div>
+</div>
+
+<div class="page">
+
+<!-- ============ TOC ============ -->
+<h2 id="toc">Table of Contents</h2>
+<div class="toc">
+<ol>
+  <li><a href="#intro">Project Introduction</a></li>
+  <li><a href="#features">Features Overview</a></li>
+  <li><a href="#techstack">Technology Stack</a></li>
+  <li><a href="#architecture">System Architecture (MVC)</a></li>
+  <li><a href="#structure">Project Folder Structure</a></li>
+  <li><a href="#flow">Request Life-Cycle / How It Works</a></li>
+  <li><a href="#frontcontroller">The Front Controller (FoodieServlet)</a></li>
+  <li><a href="#filter">Clean-URL Filter (JspUrlFilter)</a></li>
+  <li><a href="#db">Database Layer &amp; Connection</a></li>
+  <li><a href="#schema">Database Schema (All Tables)</a></li>
+  <li><a href="#dao">DAO Classes Reference</a></li>
+  <li><a href="#models">Model (POJO) Classes</a></li>
+  <li><a href="#auth">Authentication &amp; RBAC</a></li>
+  <li><a href="#modules">Functional Modules</a></li>
+  <li><a href="#chat">AI Chat Support Module</a></li>
+  <li><a href="#security">Security Aspects</a></li>
+  <li><a href="#syntax">Important Syntax Explained</a></li>
+  <li><a href="#commands">Build, Run &amp; Deploy Commands</a></li>
+  <li><a href="#viva">Viva Questions &amp; Answers (60+)</a></li>
+  <li><a href="#glossary">Glossary of Key Terms</a></li>
+</ol>
+</div>
+
+<!-- ============ 1. INTRO ============ -->
+<h2 id="intro">1. Project Introduction</h2>
+<p><strong>Foodie</strong> is a full-featured <strong>online food-ordering and restaurant-management web application</strong>.
+It lets customers browse a food menu, add items to a cart, apply discount coupons, place orders,
+pay (mock Cash-on-Delivery / Card / UPI), reserve dining tables, raise complaints and chat with an
+AI support assistant. Delivery riders pick up and deliver orders using a secure 4-digit PIN, and an
+administrator manages the entire platform (users, menu items, orders, tables, reservations, coupons and complaints).</p>
+
+<p>The application is built as a <strong>classic Java EE web app</strong> using the
+<strong>Servlet + JSP</strong> model with a hand-written <strong>JDBC data-access layer</strong> talking to a
+cloud <strong>PostgreSQL</strong> database. It follows the <strong>MVC (Model-View-Controller)</strong>
+design pattern and the <strong>Front-Controller</strong> pattern (a single servlet routes every request).</p>
+
+<table class="kv">
+  <tr><td>Project Name</td><td>Foodie</td></tr>
+  <tr><td>Type</td><td>Dynamic Web Application (Java EE / Jakarta Servlet)</td></tr>
+  <tr><td>Architecture</td><td>MVC + Front Controller + DAO pattern</td></tr>
+  <tr><td>Roles</td><td>Customer (USER), Delivery Rider (RIDER), Administrator (ADMIN)</td></tr>
+  <tr><td>Server</td><td>Apache Tomcat 9.0 (Servlet 4.0 API)</td></tr>
+  <tr><td>Database</td><td>PostgreSQL hosted on Neon (serverless cloud DB)</td></tr>
+  <tr><td>Language</td><td>Java 21</td></tr>
+  <tr><td>Build</td><td>Raw <code>javac</code> — no Maven/Gradle</td></tr>
+</table>
+
+<!-- ============ 2. FEATURES ============ -->
+<h2 id="features">2. Features Overview</h2>
+<table>
+<tr><th>Actor</th><th>Capabilities</th></tr>
+<tr><td><strong>Customer (USER)</strong></td>
+<td>Register/login, browse &amp; search menu, cart (add/update/remove/clear), apply coupons,
+checkout with COD/Card/UPI, track orders (Placed → Accepted → Picked-up → Delivered),
+cancel orders, rate delivered orders (1–5★), reserve tables (with optional dine-in food order),
+raise complaints, edit profile (name/phone/photo/password/email), AI chat support.</td></tr>
+<tr><td><strong>Rider (RIDER)</strong></td>
+<td>See accepted orders available for pickup, claim (pick up) an order, deliver by verifying
+the customer's 4-digit delivery PIN, view own delivery history and payment method.</td></tr>
+<tr><td><strong>Admin (ADMIN)</strong></td>
+<td>Dashboard with live metrics, manage users (CRUD + role/tenant), manage menu items (CRUD + image
+upload/URL), accept/reject orders, verify UPI payment screenshots, manage dining tables, approve/reject
+reservations, create/toggle/delete coupons, resolve complaints, view feedback.</td></tr>
+</table>
+
+<!-- ============ 3. TECH STACK ============ -->
+<h2 id="techstack">3. Technology Stack</h2>
+<table>
+<tr><th>Layer</th><th>Technology</th><th>Purpose</th></tr>
+<tr><td>Presentation (View)</td><td>JSP, HTML5, CSS3, Vanilla JavaScript</td><td>User interface, rendered server-side</td></tr>
+<tr><td>Controller</td><td>Java Servlet (<code>HttpServlet</code>)</td><td>Request routing &amp; business logic</td></tr>
+<tr><td>Model</td><td>Plain Java Objects (POJOs / JavaBeans)</td><td>Data structures</td></tr>
+<tr><td>Data Access</td><td>JDBC + DAO pattern</td><td>SQL persistence</td></tr>
+<tr><td>Database</td><td>PostgreSQL 16 (Neon serverless)</td><td>Persistent storage</td></tr>
+<tr><td>Driver</td><td>PostgreSQL JDBC <code>postgresql-42.7.4.jar</code></td><td>Java↔DB connectivity</td></tr>
+<tr><td>Server</td><td>Apache Tomcat 9.0</td><td>Servlet container</td></tr>
+<tr><td>AI Support</td><td>NVIDIA NIM API (OpenAI-compatible, LLaMA-3.1-8B)</td><td>Chatbot replies</td></tr>
+<tr><td>Deployment</td><td>Docker + Railway (cloud)</td><td>Containerised hosting</td></tr>
+<tr><td>File upload</td><td>Servlet <code>@MultipartConfig</code></td><td>Item &amp; payment images</td></tr>
+</table>
+
+<!-- ============ 4. ARCHITECTURE ============ -->
+<h2 id="architecture">4. System Architecture (MVC)</h2>
+<p>Foodie is a textbook <strong>Model-View-Controller</strong> application layered on top of the
+<strong>Front-Controller</strong> and <strong>DAO</strong> patterns.</p>
+
+<pre><code>          BROWSER (Customer / Rider / Admin)
+                     │  HTTP request  (e.g. GET /menu)
+                     ▼
+        ┌───────────────────────────────┐
+        │   JspUrlFilter  (Filter)      │  → makes URLs show ".jsp"
+        └───────────────────────────────┘
+                     ▼
+        ┌───────────────────────────────┐
+        │   FoodieServlet (CONTROLLER)  │  ← single Front Controller
+        │   doGet() / doPost() switch   │
+        └───────────────────────────────┘
+             │                    │
+             ▼                    ▼
+   ┌──────────────┐      ┌──────────────────┐
+   │  DAO layer   │◄────►│  Model (POJOs)   │
+   │ (JDBC SQL)   │      │ User, Order, ... │
+   └──────────────┘      └──────────────────┘
+             │
+             ▼
+   ┌──────────────────────┐
+   │ PostgreSQL (Neon DB) │
+   └──────────────────────┘
+             │  request.setAttribute(...) + forward
+             ▼
+        ┌───────────────────────────────┐
+        │   JSP  (VIEW)  e.g. menu.jsp  │  → HTML sent to browser
+        └───────────────────────────────┘</code></pre>
+
+<table>
+<tr><th>MVC Part</th><th>In Foodie</th><th>Responsibility</th></tr>
+<tr><td>Model</td><td><code>com.foodie.model.*</code> + <code>com.foodie.db.*</code> (DAOs)</td><td>Business data &amp; persistence</td></tr>
+<tr><td>View</td><td><code>WEB-INF/views/*.jsp</code></td><td>Presentation (HTML generation)</td></tr>
+<tr><td>Controller</td><td><code>com.foodie.web.FoodieServlet</code></td><td>Receives requests, calls model, selects view</td></tr>
+</table>
+
+<div class="tip"><strong>Why views live inside <code>WEB-INF/</code>:</strong> files under <code>WEB-INF</code>
+cannot be requested directly by a browser. This forces every page to go <em>through the servlet</em>,
+guaranteeing that authentication and business logic always run before a JSP renders.</div>
+
+<!-- ============ 5. STRUCTURE ============ -->
+<h2 id="structure">5. Project Folder Structure</h2>
+<pre><code>foodie/
+├── WEB-INF/
+│   ├── web.xml                  ← Deployment descriptor (servlet & filter mappings)
+│   ├── classes/                 ← Compiled .class files + db.properties
+│   │   └── com/foodie/...
+│   ├── lib/
+│   │   └── postgresql-42.7.4.jar ← JDBC driver
+│   ├── src/com/foodie/          ← Java SOURCE code
+│   │   ├── web/                 → FoodieServlet.java, JspUrlFilter.java
+│   │   ├── db/                  → *Dao.java, DatabaseManager.java
+│   │   ├── model/               → User, Order, Item, Coupon, ... (POJOs)
+│   │   └── chat/                → ChatService.java (AI support)
+│   └── views/                   ← JSP pages (the View layer)
+│       ├── index.jsp, login.jsp, menu.jsp, cart.jsp, checkout.jsp ...
+│       ├── admin/               → dashboard, users, items, orders, coupons ...
+│       └── rider/               → dashboard.jsp
+├── assets/                      ← Static files (served directly)
+│   ├── css/style.css
+│   ├── js/script.js, theme.js
+│   └── images/                  → items/, payments/ (uploads land here)
+├── Dockerfile                   ← Container build for Railway
+├── entrypoint.sh                ← Binds Tomcat to Railway's $PORT
+└── railway.json                 ← Railway deploy config</code></pre>
+
+<div class="note"><strong>Package layout:</strong> <code>com.foodie.web</code> (controllers/filters),
+<code>com.foodie.db</code> (DAOs + DB connection), <code>com.foodie.model</code> (data objects),
+<code>com.foodie.chat</code> (AI service).</div>
+
+<!-- ============ 6. FLOW ============ -->
+<h2 id="flow">6. Request Life-Cycle — How It Works</h2>
+<p>Example: a logged-in customer clicks <strong>“Menu”</strong>.</p>
+<ol>
+  <li>Browser sends <code>GET /foodie/menu</code>.</li>
+  <li><strong>JspUrlFilter</strong> sees a plain page GET with no extension → redirects to <code>/menu.jsp</code>
+      (so the address bar looks like a real page).</li>
+  <li><strong>web.xml</strong> maps both <code>/menu</code> and <code>/menu.jsp</code> to <code>FoodieServlet</code>.</li>
+  <li><code>FoodieServlet.route()</code> strips the <code>.jsp</code> suffix → route key becomes <code>/menu</code>.</li>
+  <li><code>doGet()</code>’s <code>switch</code> matches <code>case "/menu"</code>.</li>
+  <li><code>ensureLoggedIn()</code> confirms a valid session (else redirect to <code>/login</code>).</li>
+  <li><code>showMenu()</code> calls <code>itemDao.findAll()</code> → runs a <code>SELECT</code> on PostgreSQL.</li>
+  <li>Results are put on the request: <code>req.setAttribute("items", ...)</code>.</li>
+  <li>The servlet <em>forwards</em> to <code>/WEB-INF/views/menu.jsp</code>.</li>
+  <li>The JSP loops over the items list and generates HTML, which Tomcat returns to the browser.</li>
+</ol>
+
+<div class="tip"><strong>POST-Redirect-GET (PRG):</strong> After every form POST (login, add-to-cart, place-order),
+the servlet responds with <code>res.sendRedirect(...)</code> instead of forwarding. This prevents the
+“resubmit form?” browser prompt on refresh and keeps URLs clean.</div>
+
+<!-- ============ 7. FRONT CONTROLLER ============ -->
+<h2 id="frontcontroller">7. The Front Controller — <code>FoodieServlet</code></h2>
+<p>A <strong>single servlet handles every dynamic route</strong>. This is the Front-Controller pattern.
+It extends <code>HttpServlet</code> and overrides <code>doGet()</code> and <code>doPost()</code>, each a big
+<code>switch</code> on the route key.</p>
+
+<h4>Routing helper (suffix stripping)</h4>
+<pre><code class="language-java">private static String route(HttpServletRequest req) {
+    String path = req.getServletPath();          // e.g. "/menu.jsp"
+    if (path != null &amp;&amp; path.endsWith(".jsp")) {
+        return path.substring(0, path.length() - ".jsp".length());  // "/menu"
+    }
+    return path;
+}</code></pre>
+
+<h4>doGet skeleton</h4>
+<pre><code class="language-java">protected void doGet(HttpServletRequest req, HttpServletResponse res) {
+    switch (route(req)) {
+        case "/login":     ...                       break;
+        case "/menu":      if (!ensureLoggedIn(req,res)) return;
+                           showMenu(req, res);        return;
+        case "/admin/orders":
+                           if (!ensureLoggedIn(req,res)) return;
+                           if (!authorizeRole(req,res,"ADMIN")) return;
+                           showAdminOrders(req, res);  return;
+        default:           showHome(req, res, "");
+    }
+}</code></pre>
+
+<p>The <code>@MultipartConfig</code> annotation on the class enables file uploads (item images and UPI payment
+screenshots) with size limits — max file 5&nbsp;MB, max request 20&nbsp;MB.</p>
+
+<table>
+<tr><th>Guard method</th><th>What it does</th></tr>
+<tr><td><code>ensureLoggedIn()</code></td><td>Redirects to <code>/login</code> if no <code>userId</code> in session; returns boolean.</td></tr>
+<tr><td><code>authorizeRole(req,res,"ADMIN")</code></td><td>Redirects to <code>/dashboard</code> unless the session role matches.</td></tr>
+<tr><td><code>ensureRoleInSession()</code></td><td>Recovers the role from the DB if a session lost it.</td></tr>
+<tr><td><code>route()</code></td><td>Normalises <code>.jsp</code>-suffixed paths back to clean route keys.</td></tr>
+</table>
+
+<!-- ============ 8. FILTER ============ -->
+<h2 id="filter">8. Clean-URL Filter — <code>JspUrlFilter</code></h2>
+<p>A <strong>Servlet Filter</strong> mapped to <code>/*</code> (every request). Its only job is to make page
+URLs end in <code>.jsp</code> for display, while keeping clean routes internally.</p>
+<ul>
+  <li>Only rewrites <strong>GET</strong> requests for pages with <strong>no file extension</strong>.</li>
+  <li>Leaves static assets (<code>.css</code>, <code>.js</code>, <code>.png</code>), form POSTs, the AJAX
+      <code>/chat</code> call, and the site root untouched.</li>
+  <li>Sends a redirect: <code>/menu</code> → <code>/menu.jsp</code>; the servlet then strips it back.</li>
+</ul>
+<pre><code class="language-java">public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain) {
+    HttpServletRequest req = (HttpServletRequest) request;
+    if (shouldAppendJsp(req)) {                     // GET + no extension
+        String q = req.getQueryString();
+        res.sendRedirect(req.getContextPath() + req.getServletPath() + ".jsp"
+                         + (q != null ? "?" + q : ""));
+        return;
+    }
+    chain.doFilter(request, response);              // otherwise continue
+}</code></pre>
+
+<!-- ============ 9. DB LAYER ============ -->
+<h2 id="db">9. Database Layer &amp; Connection</h2>
+<p>Connections come from a single utility class, <code>DatabaseManager</code>. It loads the JDBC driver once
+in a <code>static</code> block and reads credentials from environment variables first, then falls back to
+<code>WEB-INF/classes/db.properties</code>.</p>
+
+<pre><code class="language-java">public final class DatabaseManager {
+    static {
+        Class.forName("org.postgresql.Driver");         // load JDBC driver once
+        url      = firstNonBlank(System.getenv("DB_URL"),      props.getProperty("db.url"));
+        username = firstNonBlank(System.getenv("DB_USERNAME"), props.getProperty("db.username"));
+        password = firstNonBlank(System.getenv("DB_PASSWORD"), props.getProperty("db.password"));
+        ready = true;
+    }
+    public static Connection getConnection() throws SQLException {
+        return DriverManager.getConnection(url, username, password);
+    }
+}</code></pre>
+
+<div class="note"><strong>Self-bootstrapping schema:</strong> every DAO runs its <code>CREATE TABLE IF NOT EXISTS</code>
+(and <code>ALTER TABLE ... ADD COLUMN IF NOT EXISTS</code> migrations) inside its constructor. So the very
+first time the app runs, all tables are created automatically — <em>no manual SQL migration step</em>.
+The default admin (<code>admin@gmail.com</code> / <code>admin123</code>) is also auto-created.</div>
+
+<h4>db.properties (local fallback)</h4>
+<pre><code>db.url=jdbc:postgresql://&lt;host&gt;.neon.tech:5432/neondb?sslmode=require
+db.username=neondb_owner
+db.password=********
+nvidia.api.url=https://integrate.api.nvidia.com/v1/chat/completions
+nvidia.api.key=nvapi-********
+nvidia.model=meta/llama-3.1-8b-instruct</code></pre>
+
+<!-- ============ 10. SCHEMA ============ -->
+<h2 id="schema">10. Database Schema (All Tables)</h2>
+<p>Nine tables, all in PostgreSQL. (The users table is deliberately named <code>resturent</code> in code.)</p>
+
+<table>
+<tr><th>Table</th><th>Purpose</th><th>Key Columns</th></tr>
+<tr><td><code>resturent</code></td><td>Users (all roles)</td><td>id, name, email(UNIQUE), password, role, tenant_id, phone, photo_url</td></tr>
+<tr><td><code>items</code></td><td>Menu catalog</td><td>id, name, category, price, discount, image_path</td></tr>
+<tr><td><code>orders</code></td><td>Customer orders</td><td>id, order_code, user_id, total, status, rider_id, delivery_pin, coupon_code, discount, payment_proof, rating</td></tr>
+<tr><td><code>order_items</code></td><td>Line items of an order</td><td>id, order_id(FK→orders), item_id, item_name, price, quantity</td></tr>
+<tr><td><code>restaurant_tables</code></td><td>Dining tables</td><td>id, table_name, shape, capacity, floor, zone, active</td></tr>
+<tr><td><code>reservations</code></td><td>Table bookings</td><td>id, reservation_code, user_id, table_id, reserve_date, time_in, time_out, party_size, status, order_id</td></tr>
+<tr><td><code>coupons</code></td><td>Discount codes</td><td>id, code(UNIQUE), type, value, min_order, expiry_date, active</td></tr>
+<tr><td><code>complaints</code></td><td>Customer complaints</td><td>id, complaint_code, user_id, order_id, message, status, admin_reply</td></tr>
+<tr><td><code>feedback</code></td><td>Public footer messages</td><td>id, name, email, message, created_at</td></tr>
+</table>
+
+<h4>Example — the <code>orders</code> table (DDL)</h4>
+<pre><code class="sql">CREATE TABLE IF NOT EXISTS orders (
+  id            SERIAL PRIMARY KEY,
+  order_code    VARCHAR(40) UNIQUE,
+  user_id       INTEGER,
+  customer_name VARCHAR(255),
+  tenant_id     INTEGER NOT NULL DEFAULT 1,
+  address       VARCHAR(512),
+  phone         VARCHAR(40),
+  payment_method VARCHAR(20),
+  total         NUMERIC(10,2) NOT NULL DEFAULT 0,
+  status        VARCHAR(20)  NOT NULL DEFAULT 'PENDING',
+  rider_id      INTEGER,
+  rider_name    VARCHAR(255),
+  delivery_pin  VARCHAR(4),
+  table_id      INTEGER,
+  table_name    VARCHAR(120),
+  coupon_code   VARCHAR(40),
+  discount      NUMERIC(10,2) NOT NULL DEFAULT 0,
+  payment_proof VARCHAR(255),
+  rating        INTEGER,
+  created_at    TIMESTAMP DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS order_items (
+  id        SERIAL PRIMARY KEY,
+  order_id  INTEGER NOT NULL REFERENCES orders(id) ON DELETE CASCADE,
+  item_id   INTEGER,
+  item_name VARCHAR(255),
+  price     NUMERIC(10,2) NOT NULL DEFAULT 0,
+  quantity  INTEGER NOT NULL DEFAULT 1
+);</code></pre>
+
+<h4>Entity relationships</h4>
+<pre><code>resturent (user) 1───∞ orders 1───∞ order_items ∞───1 items
+resturent (user) 1───∞ reservations ∞───1 restaurant_tables
+orders 1───0..1 reservations          (dine-in link via order_id)
+resturent (user) 1───∞ complaints ∞───1 orders
+coupons  1───∞ orders                 (applied coupon_code)</code></pre>
+
+<!-- ============ 11. DAO ============ -->
+<h2 id="dao">11. DAO Classes Reference</h2>
+<p>Each DAO wraps all SQL for one table using <strong>JDBC</strong> with <strong>PreparedStatement</strong>
+(to prevent SQL injection) and <strong>try-with-resources</strong> (auto-close connections).</p>
+
+<h3>UserDao — table <code>resturent</code></h3>
+<table>
+<tr><th>Method</th><th>SQL / Action</th></tr>
+<tr><td><code>findByEmail(email)</code></td><td><code>SELECT ... WHERE email = ?</code> — used at login</td></tr>
+<tr><td><code>emailExists(email)</code></td><td><code>SELECT 1 ... WHERE email = ? LIMIT 1</code></td></tr>
+<tr><td><code>createUserWithRoleTenant(...)</code></td><td><code>INSERT INTO resturent (name,email,password,role,tenant_id)</code></td></tr>
+<tr><td><code>updatePassword(email,new)</code></td><td><code>UPDATE ... SET password = ? WHERE email = ?</code></td></tr>
+<tr><td><code>updateProfile / updateEmail</code></td><td>profile edits; <code>updateEmail</code> throws if email already in use</td></tr>
+<tr><td><code>findAll / findById / deleteById / updateRoleTenantById</code></td><td>admin user management</td></tr>
+</table>
+<div class="note"><code>ensureDefaultAdminUser()</code> guarantees <code>admin@gmail.com</code> exists with role ADMIN.</div>
+
+<h3>OrderDao — tables <code>orders</code> + <code>order_items</code></h3>
+<table>
+<tr><th>Method</th><th>SQL / Action</th></tr>
+<tr><td><code>createOrder(order, lines)</code></td><td><strong>Transactional</strong> — insert order + batch-insert items, commit or rollback</td></tr>
+<tr><td><code>updateStatus(id, ACCEPTED)</code></td><td>admin accept: sets status + a unique 4-digit <code>delivery_pin</code>, guarded <code>WHERE status='PENDING'</code></td></tr>
+<tr><td><code>claimOrder(id, riderId, name)</code></td><td>race-safe: <code>WHERE rider_id IS NULL AND status='ACCEPTED'</code> → PICKED_UP</td></tr>
+<tr><td><code>markDelivered(id, riderId, pin)</code></td><td><code>WHERE ... AND delivery_pin = ?</code> — PIN check is atomic in SQL</td></tr>
+<tr><td><code>cancelOrder(id, userId)</code></td><td>customer cancel, only when PENDING/ACCEPTED</td></tr>
+<tr><td><code>rateOrder(id, userId, 1..5)</code></td><td>only when status='DELIVERED'</td></tr>
+<tr><td><code>findAvailableForRider()</code></td><td><code>WHERE status='ACCEPTED' AND rider_id IS NULL</code></td></tr>
+<tr><td><code>countByStatus(status)</code></td><td>dashboard metrics</td></tr>
+</table>
+<p><strong>Order status constants:</strong>
+<span class="pill">PENDING</span><span class="pill">ACCEPTED</span><span class="pill">PICKED_UP</span>
+<span class="pill">DELIVERED</span><span class="pill">REJECTED</span><span class="pill">CANCELLED</span></p>
+
+<h3>Other DAOs (summary)</h3>
+<table>
+<tr><th>DAO</th><th>Table</th><th>Notable methods / logic</th></tr>
+<tr><td>ItemDao</td><td>items</td><td>findAll, findById, countAll, createItem, updateItem, deleteById</td></tr>
+<tr><td>TableDao</td><td>restaurant_tables</td><td>findAllActive, createTable, updateTable, deleteById</td></tr>
+<tr><td>ReservationDao</td><td>reservations</td><td><code>isTableAvailable()</code> uses interval-overlap check; create, cancel, updateStatus, linkOrder</td></tr>
+<tr><td>CouponDao</td><td>coupons</td><td><code>findUsable(code, subtotal)</code> validates active + not-expired + min-order in one SQL query; handles duplicate code via SQLState 23505</td></tr>
+<tr><td>ComplaintDao</td><td>complaints</td><td>create, findByUserId, resolve (OPEN→RESOLVED with reply)</td></tr>
+<tr><td>FeedbackDao</td><td>feedback</td><td>create, findRecent(n), countAll</td></tr>
+</table>
+
+<h4>Typical DAO method — PreparedStatement + try-with-resources</h4>
+<pre><code class="language-java">public Item findById(int id) throws SQLException {
+    String sql = "SELECT id,name,category,price,discount,image_path FROM items WHERE id = ?";
+    try (Connection c = DatabaseManager.getConnection();
+         PreparedStatement ps = c.prepareStatement(sql)) {
+        ps.setInt(1, id);                       // ? bound safely — no SQL injection
+        try (ResultSet rs = ps.executeQuery()) {
+            if (rs.next()) {
+                return new Item(rs.getInt("id"), rs.getString("name"), ...);
+            }
+        }
+    }
+    return null;
+}</code></pre>
+
+<!-- ============ 12. MODELS ============ -->
+<h2 id="models">12. Model (POJO) Classes</h2>
+<p>Plain data classes (JavaBeans): private fields + public getters/setters + a no-arg constructor, so JSP
+Expression Language can read them.</p>
+<table>
+<tr><th>Class</th><th>Represents</th><th>Interesting behaviour</th></tr>
+<tr><td>User</td><td>Any account</td><td>role, tenantId, phone, photoUrl</td></tr>
+<tr><td>Item</td><td>Menu dish</td><td>price + discount%</td></tr>
+<tr><td>Order</td><td>An order</td><td>list of OrderItem, deliveryPin, rating, paymentProof</td></tr>
+<tr><td>OrderItem</td><td>One order line</td><td><code>getLineTotal()</code> = price × quantity</td></tr>
+<tr><td>Coupon</td><td>Discount code</td><td><code>discountFor(subtotal)</code>: PERCENT or FLAT, capped at subtotal</td></tr>
+<tr><td>Reservation</td><td>Table booking</td><td>status lifecycle, optional orderId</td></tr>
+<tr><td>DiningTable</td><td>Physical table</td><td>shape, capacity, floor, zone, active</td></tr>
+<tr><td>Complaint / Feedback</td><td>Support messages</td><td>status, adminReply</td></tr>
+</table>
+<pre><code class="language-java">// Coupon core logic
+public double discountFor(double subtotal) {
+    double d = PERCENT.equals(type) ? subtotal * (value / 100.0) : value;
+    if (d &lt; 0)        d = 0;
+    if (d &gt; subtotal) d = subtotal;   // never discount more than the bill
+    return d;
+}</code></pre>
+
+<!-- ============ 13. AUTH ============ -->
+<h2 id="auth">13. Authentication &amp; Role-Based Access Control</h2>
+<p>Authentication is <strong>session-based</strong>. On successful login the servlet stores the identity in the
+<code>HttpSession</code>:</p>
+<pre><code class="language-java">HttpSession session = req.getSession(true);
+session.setAttribute("userId",   user.getId());
+session.setAttribute("userName", user.getName());
+session.setAttribute("userEmail",user.getEmail());
+session.setAttribute("userRole", normalizedRole);   // USER / RIDER / ADMIN
+session.setAttribute("tenantId", user.getTenantId());</code></pre>
+<ul>
+  <li><strong>ensureLoggedIn</strong> protects customer pages.</li>
+  <li><strong>authorizeRole(...,"ADMIN"/"RIDER")</strong> protects admin/rider pages (RBAC).</li>
+  <li><strong>Logout</strong> calls <code>session.invalidate()</code>.</li>
+  <li>After login, the user resumes the page they were bounced from (<code>afterLogin</code>), else the dashboard.</li>
+  <li>Customers land on <code>/menu</code>, admins on <code>/admin/dashboard</code>, riders on <code>/rider/dashboard</code>.</li>
+</ul>
+<div class="note"><strong>Honest limitation (good to mention in viva):</strong> passwords are stored as
+<em>plain text</em> in this student project. In production you would hash them with <strong>BCrypt</strong>/PBKDF2
+and add a salt. This is the single biggest security improvement to name if asked.</div>
+
+<!-- ============ 14. MODULES ============ -->
+<h2 id="modules">14. Functional Modules (Deep Dive)</h2>
+
+<h3>14.1 Cart (session-based)</h3>
+<p>The cart is a <code>Map&lt;Integer,Integer&gt;</code> (itemId → quantity) kept in the session — no DB writes until
+checkout. Actions: <code>add</code> (merge quantities), <code>update</code>, <code>remove</code>, <code>clear</code>.</p>
+<pre><code class="language-java">cart.merge(itemId, qty, Integer::sum);   // add: increment existing quantity</code></pre>
+
+<h3>14.2 Checkout &amp; Coupons</h3>
+<ul>
+  <li>Prices are <strong>re-fetched from the DB</strong> at checkout — client-side prices are never trusted.</li>
+  <li>Applied coupons are <strong>re-validated server-side</strong> against the real subtotal before the order is saved.</li>
+  <li>Payment methods: <strong>COD</strong>, <strong>Card</strong>, <strong>UPI</strong> (UPI requires a screenshot upload).</li>
+  <li>On success the cart is cleared and the user is redirected to <code>/orders?placed=ORD...</code> with the receipt auto-opened.</li>
+</ul>
+
+<h3>14.3 Order Lifecycle</h3>
+<pre><code>Customer places  →  PENDING
+Admin accepts    →  ACCEPTED   (a unique 4-digit delivery PIN is generated)
+Rider picks up   →  PICKED_UP  (claimOrder: race-safe, one rider only)
+Rider delivers   →  DELIVERED  (must enter the customer's correct PIN)
+Admin rejects    →  REJECTED
+Customer cancels →  CANCELLED  (only while PENDING or ACCEPTED)</code></pre>
+<div class="tip"><strong>Delivery PIN security:</strong> the PIN is verified inside the SQL <code>WHERE</code>
+clause (<code>markDelivered</code>), so a wrong PIN simply updates 0 rows — no way to bypass it from Java.</div>
+
+<h3>14.4 Table Reservation</h3>
+<p>Customer picks a date + time window and a table. Availability uses an <strong>interval-overlap test</strong>
+(<code>existing.time_in &lt; requested.time_out AND existing.time_out &gt; requested.time_in</code>). A booking can
+optionally continue into a <strong>dine-in food order</strong> (the table stands in for a delivery address).</p>
+
+<h3>14.5 Admin Dashboard</h3>
+<p>Aggregates live metrics: total items, total orders, counts per status, feedback count, open complaints and
+active coupons — all via <code>COUNT(*)</code> queries.</p>
+
+<!-- ============ 15. CHAT ============ -->
+<h2 id="chat">15. AI Chat Support Module</h2>
+<p><code>ChatService</code> is a server-side client for <strong>NVIDIA’s OpenAI-compatible chat API</strong>
+(model LLaMA-3.1-8B). The browser only ever talks to our own <code>POST /chat</code> endpoint, so the API key
+<strong>never reaches the client</strong>.</p>
+<ul>
+  <li>Uses Java 11’s built-in <code>java.net.http.HttpClient</code> — no external HTTP library.</li>
+  <li>A fixed <strong>system prompt</strong> constrains the bot to Foodie-related help.</li>
+  <li>Login is required; input is capped at 1000 chars.</li>
+  <li>JSON is built and parsed by hand (no JSON library on the classpath): <code>jsonEscape()</code> and
+      <code>extractContent()</code>.</li>
+  <li>Never throws — returns a friendly fallback string on any failure.</li>
+</ul>
+<pre><code class="language-java">String reply = ChatService.getInstance().reply(message);
+res.getWriter().write("{\"reply\":\"" + ChatService.jsonEscape(reply) + "\"}");</code></pre>
+
+<!-- ============ 16. SECURITY ============ -->
+<h2 id="security">16. Security Aspects</h2>
+<table>
+<tr><th>Concern</th><th>Mitigation in Foodie</th></tr>
+<tr><td>SQL Injection</td><td><strong>PreparedStatement</strong> with bound <code>?</code> parameters everywhere</td></tr>
+<tr><td>XSS (cross-site scripting)</td><td><code>escape()</code> HTML-encodes user text (&amp;, &lt;, &gt;, &quot;, &#39;)</td></tr>
+<tr><td>Direct JSP access</td><td>JSPs live under <code>WEB-INF/</code> → unreachable without the servlet</td></tr>
+<tr><td>Broken access control</td><td><code>authorizeRole()</code> guards every admin/rider route (RBAC)</td></tr>
+<tr><td>Price / discount tampering</td><td>Prices &amp; coupon discounts recomputed server-side from the DB</td></tr>
+<tr><td>Race conditions</td><td>Status transitions guarded in SQL <code>WHERE</code> (claim, deliver, cancel)</td></tr>
+<tr><td>Delivery fraud</td><td>4-digit PIN checked atomically in SQL</td></tr>
+<tr><td>Secret leakage</td><td>DB &amp; API credentials read from env vars / server-side properties, never sent to browser</td></tr>
+<tr><td>Upload abuse</td><td><code>@MultipartConfig</code> size limits (5 MB file / 20 MB request)</td></tr>
+</table>
+<div class="note"><strong>Known weaknesses to acknowledge:</strong> plain-text passwords, secrets committed in
+<code>db.properties</code>, no CSRF tokens, session-fixation not hardened. All are standard “future work” talking points.</div>
+
+<!-- ============ 17. SYNTAX ============ -->
+<h2 id="syntax">17. Important Syntax Explained</h2>
+
+<h4>Servlet declaration</h4>
+<pre><code class="language-java">public class FoodieServlet extends HttpServlet {
+    protected void doGet (HttpServletRequest req, HttpServletResponse res) { ... }
+    protected void doPost(HttpServletRequest req, HttpServletResponse res) { ... }
+}</code></pre>
+
+<h4>Forward vs Redirect</h4>
+<pre><code class="language-java">// FORWARD — server-side, same request, URL unchanged, can pass attributes
+req.getRequestDispatcher("/WEB-INF/views/menu.jsp").forward(req, res);
+
+// REDIRECT — tells browser to make a NEW request, URL changes (used after POST)
+res.sendRedirect(req.getContextPath() + "/orders");</code></pre>
+
+<h4>Session handling</h4>
+<pre><code class="language-java">HttpSession s = req.getSession(true);   // create if none
+s.setAttribute("userId", 42);
+Object id = s.getAttribute("userId");
+s.invalidate();                         // logout</code></pre>
+
+<h4>JDBC pattern (the “big 5”)</h4>
+<pre><code class="language-java">Connection con  = DriverManager.getConnection(url, user, pass);
+PreparedStatement ps = con.prepareStatement("SELECT * FROM items WHERE id = ?");
+ps.setInt(1, id);
+ResultSet rs = ps.executeQuery();       // executeUpdate() for INSERT/UPDATE/DELETE
+while (rs.next()) { rs.getString("name"); }</code></pre>
+
+<h4>JSP + Expression Language + scriptlet</h4>
+<pre><code class="language-jsp">&lt;%@ page import="java.util.List, com.foodie.model.Item" %&gt;
+&lt;% List&lt;Item&gt; items = (List&lt;Item&gt;) request.getAttribute("items"); %&gt;
+&lt;% for (Item it : items) { %&gt;
+    &lt;h3&gt;&lt;%= it.getName() %&gt;&lt;/h3&gt;            &lt;%-- &lt;%= %&gt; prints a value --%&gt;
+&lt;% } %&gt;
+Context path via EL: ${pageContext.request.contextPath}</code></pre>
+
+<h4>web.xml mapping</h4>
+<pre><code class="language-xml">&lt;servlet&gt;
+  &lt;servlet-name&gt;FoodieServlet&lt;/servlet-name&gt;
+  &lt;servlet-class&gt;com.foodie.web.FoodieServlet&lt;/servlet-class&gt;
+&lt;/servlet&gt;
+&lt;servlet-mapping&gt;
+  &lt;servlet-name&gt;FoodieServlet&lt;/servlet-name&gt;
+  &lt;url-pattern&gt;/menu&lt;/url-pattern&gt;
+  &lt;url-pattern&gt;/menu.jsp&lt;/url-pattern&gt;
+&lt;/servlet-mapping&gt;</code></pre>
+
+<!-- ============ 18. COMMANDS ============ -->
+<h2 id="commands">18. Build, Run &amp; Deploy Commands</h2>
+
+<h4>Compile (no Maven/Gradle — raw javac, run from <code>WEB-INF/src</code>)</h4>
+<pre><code>javac -encoding UTF-8 \
+  -cp "../lib/postgresql-42.7.4.jar;&lt;tomcat&gt;/lib/servlet-api.jar" \
+  -d ../classes \
+  com/foodie/model/*.java com/foodie/db/*.java \
+  com/foodie/chat/*.java  com/foodie/web/*.java</code></pre>
+<p>Classes are written to <code>WEB-INF/classes</code>; the servlet-api.jar is Tomcat’s own, the Postgres
+driver is in <code>WEB-INF/lib</code>. All four packages must be compiled together.</p>
+
+<h4>Start Tomcat (Windows, JDK 21)</h4>
+<pre><code>cd &lt;tomcat&gt;/bin
+set "JAVA_HOME=C:\Program Files\Java\jdk-21.0.10"
+startup.bat        # (shutdown.bat to stop)</code></pre>
+
+<h4>Hot-reload after recompiling</h4>
+<pre><code># Tomcat reloads the context when web.xml changes:
+touch WEB-INF/web.xml     # recompile FIRST, then touch (≈10s reload cycle)</code></pre>
+
+<h4>Run the app</h4>
+<pre><code>http://localhost:8080/foodie/        # welcome page (home)
+Login: admin@gmail.com / admin123    # default admin</code></pre>
+
+<h4>Docker / Railway deploy</h4>
+<pre><code>FROM tomcat:9.0-jre21-temurin        # Dockerfile
+RUN rm -rf /usr/local/tomcat/webapps/ROOT
+COPY . /usr/local/tomcat/webapps/ROOT/     # serve at root context "/"
+# entrypoint.sh rewrites Tomcat's port to Railway's $PORT, then runs catalina.sh</code></pre>
+
+<h4>Handy Git commands</h4>
+<pre><code>git add .
+git commit -m "Add project documentation"
+git push origin main</code></pre>
+
+<!-- ============ 19. VIVA ============ -->
+<h2 id="viva">19. Viva Questions &amp; Answers</h2>
+
+<h3>A. Basics &amp; Architecture</h3>
+
+<div class="qa"><p class="q">Q1. What is Foodie?</p>
+<p class="a">A Java Servlet/JSP web application for online food ordering and restaurant management, supporting
+three roles — customer, delivery rider and admin — backed by a PostgreSQL database.</p></div>
+
+<div class="qa"><p class="q">Q2. Which design pattern does the project follow?</p>
+<p class="a">Primarily <strong>MVC</strong>. It also uses the <strong>Front-Controller</strong> pattern (one
+servlet routes all requests), the <strong>DAO</strong> pattern (one class per table for persistence), and the
+<strong>Singleton</strong> pattern (ChatService, DatabaseManager).</p></div>
+
+<div class="qa"><p class="q">Q3. What is MVC and how is it applied here?</p>
+<p class="a">Model = POJOs + DAOs (<code>com.foodie.model</code>/<code>db</code>); View = JSP pages in
+<code>WEB-INF/views</code>; Controller = <code>FoodieServlet</code>. The controller receives the request, uses
+the model to fetch/save data, then forwards to a view that renders HTML.</p></div>
+
+<div class="qa"><p class="q">Q4. What is a Front Controller? Why use one?</p>
+<p class="a">A single entry-point servlet that handles every request and dispatches to the right handler. Benefits:
+centralised authentication, consistent routing, and no need to write a separate servlet per page.</p></div>
+
+<div class="qa"><p class="q">Q5. What is a Servlet?</p>
+<p class="a">A Java class running inside a web container (Tomcat) that handles HTTP requests and generates responses.
+It extends <code>HttpServlet</code> and overrides <code>doGet()</code>/<code>doPost()</code>.</p></div>
+
+<div class="qa"><p class="q">Q6. What is the Servlet life-cycle?</p>
+<p class="a">Three methods managed by the container: <code>init()</code> (once, on load) → <code>service()</code>
+(per request, dispatches to doGet/doPost) → <code>destroy()</code> (once, on unload). The container creates a
+single servlet instance and serves concurrent requests with threads.</p></div>
+
+<div class="qa"><p class="q">Q7. What is JSP and how does it relate to servlets?</p>
+<p class="a">JSP (JavaServer Pages) is an HTML template with embedded Java. At runtime the container
+<strong>compiles each JSP into a servlet</strong>. We use JSP purely for the view layer.</p></div>
+
+<div class="qa"><p class="q">Q8. Difference between forward and redirect?</p>
+<p class="a"><strong>Forward</strong> is server-side within the same request (URL stays the same, attributes are
+preserved) — used to render a JSP. <strong>Redirect</strong> asks the browser to issue a brand-new request
+(URL changes) — used after POST to implement Post-Redirect-Get.</p></div>
+
+<div class="qa"><p class="q">Q9. What is the POST-Redirect-GET pattern and why use it?</p>
+<p class="a">After processing a POST, respond with a redirect to a GET page. This prevents duplicate form
+submissions when the user refreshes and keeps the browser URL clean. Foodie uses it after login, add-to-cart,
+checkout, etc.</p></div>
+
+<div class="qa"><p class="q">Q10. What is <code>web.xml</code>?</p>
+<p class="a">The deployment descriptor. It declares the servlet, the filter and all URL mappings, plus the
+welcome file. Foodie maps each route both cleanly (<code>/menu</code>) and with a <code>.jsp</code> suffix.</p></div>
+
+<h3>B. Database &amp; JDBC</h3>
+
+<div class="qa"><p class="q">Q11. What is JDBC?</p>
+<p class="a">Java Database Connectivity — the standard API for connecting Java to relational databases and running
+SQL. Core objects: <code>Connection</code>, <code>Statement</code>/<code>PreparedStatement</code>,
+<code>ResultSet</code>.</p></div>
+
+<div class="qa"><p class="q">Q12. Why PreparedStatement instead of Statement?</p>
+<p class="a">It pre-compiles the SQL and binds parameters with <code>?</code>, which (a) prevents
+<strong>SQL injection</strong> and (b) is faster for repeated queries. Foodie uses it for every query.</p></div>
+
+<div class="qa"><p class="q">Q13. What is the DAO pattern?</p>
+<p class="a">Data Access Object — a class that encapsulates all database operations for one entity, so business
+logic never writes raw SQL. Foodie has UserDao, OrderDao, ItemDao, etc.</p></div>
+
+<div class="qa"><p class="q">Q14. How are database tables created?</p>
+<p class="a">Each DAO runs <code>CREATE TABLE IF NOT EXISTS</code> in its constructor (self-bootstrapping). New
+columns are added with <code>ALTER TABLE ... ADD COLUMN IF NOT EXISTS</code>. No manual migration is needed.</p></div>
+
+<div class="qa"><p class="q">Q15. Which database is used and why?</p>
+<p class="a">PostgreSQL, hosted on Neon (serverless cloud). It’s free-tier friendly, supports SSL and works from
+anywhere, which suits cloud deployment on Railway.</p></div>
+
+<div class="qa"><p class="q">Q16. How is the DB connection configured?</p>
+<p class="a"><code>DatabaseManager</code> loads the driver once in a static block and reads the URL/username/password
+from environment variables first, then <code>db.properties</code>. <code>getConnection()</code> returns a fresh
+<code>Connection</code>.</p></div>
+
+<div class="qa"><p class="q">Q17. What is try-with-resources and why is it used?</p>
+<p class="a">A Java construct that auto-closes resources (Connection, PreparedStatement, ResultSet) at the end of
+the block, preventing connection leaks. Every DAO method uses it.</p></div>
+
+<div class="qa"><p class="q">Q18. How does the order creation stay consistent?</p>
+<p class="a"><code>createOrder()</code> runs a <strong>transaction</strong>: it turns off auto-commit, inserts the
+order and all line items, then <code>commit()</code>s — or <code>rollback()</code>s on any error, so you never get
+an order with missing items.</p></div>
+
+<div class="qa"><p class="q">Q19. What is <code>SERIAL PRIMARY KEY</code>?</p>
+<p class="a">A PostgreSQL auto-incrementing integer primary key — the DB assigns a unique id automatically on insert.</p></div>
+
+<div class="qa"><p class="q">Q20. How do you get the generated id back after an insert?</p>
+<p class="a">Prepare the statement with <code>RETURN_GENERATED_KEYS</code> and read it from
+<code>getGeneratedKeys()</code>. Foodie does this for orders, reservations and complaints.</p></div>
+
+<h3>C. Security</h3>
+
+<div class="qa"><p class="q">Q21. How is SQL injection prevented?</p>
+<p class="a">All SQL uses PreparedStatement with bound parameters, so user input is treated as data, never as
+executable SQL.</p></div>
+
+<div class="qa"><p class="q">Q22. How is XSS handled?</p>
+<p class="a">User-supplied text is HTML-escaped by the <code>escape()</code> helper before being written into pages
+(converting <code>&lt; &gt; &amp; " '</code>).</p></div>
+
+<div class="qa"><p class="q">Q23. Why are JSPs under WEB-INF?</p>
+<p class="a">Files under <code>WEB-INF</code> can’t be opened directly by a browser. This forces every page through
+the servlet, so authentication and authorization always run first.</p></div>
+
+<div class="qa"><p class="q">Q24. How is role-based access enforced?</p>
+<p class="a">The role is stored in the session at login. Admin/rider routes call <code>authorizeRole()</code>, which
+redirects away anyone whose session role doesn’t match.</p></div>
+
+<div class="qa"><p class="q">Q25. Biggest security weakness and how to fix it?</p>
+<p class="a">Passwords are stored in plain text. Fix by hashing with <strong>BCrypt</strong> (salted, slow hash) and
+comparing hashes at login. Also move secrets out of <code>db.properties</code> into environment variables and add
+CSRF tokens.</p></div>
+
+<div class="qa"><p class="q">Q26. How is the delivery PIN kept secure?</p>
+<p class="a">It’s generated uniquely when the admin accepts an order and verified inside the SQL WHERE clause on
+delivery — a wrong PIN updates zero rows, so it can’t be bypassed in Java.</p></div>
+
+<div class="qa"><p class="q">Q27. How do you stop price/coupon tampering?</p>
+<p class="a">The server ignores any price sent by the browser. At checkout it re-reads item prices from the DB and
+re-validates the coupon against the true subtotal before saving the order.</p></div>
+
+<h3>D. Features &amp; Logic</h3>
+
+<div class="qa"><p class="q">Q28. How does the cart work?</p>
+<p class="a">It’s a <code>Map&lt;itemId,quantity&gt;</code> stored in the HttpSession. Nothing is written to the DB until
+checkout, so it’s fast and per-user.</p></div>
+
+<div class="qa"><p class="q">Q29. Walk through the order lifecycle.</p>
+<p class="a">PENDING (placed) → ACCEPTED (admin, PIN generated) → PICKED_UP (rider claims) → DELIVERED (rider enters
+PIN). Alternatives: REJECTED (admin) or CANCELLED (customer, only while pending/accepted).</p></div>
+
+<div class="qa"><p class="q">Q30. How is a rider stopped from claiming the same order twice?</p>
+<p class="a"><code>claimOrder()</code> updates <code>WHERE rider_id IS NULL AND status='ACCEPTED'</code>. Only the first
+rider’s update succeeds; a second attempt affects zero rows.</p></div>
+
+<div class="qa"><p class="q">Q31. How is table double-booking prevented?</p>
+<p class="a">Before booking, <code>isTableAvailable()</code> runs an interval-overlap query for the same table and date
+against PENDING/ACCEPTED reservations. If any overlap exists, the booking is refused.</p></div>
+
+<div class="qa"><p class="q">Q32. How do coupons work?</p>
+<p class="a">Admins create PERCENT or FLAT coupons with an optional min-order and expiry. <code>findUsable()</code>
+validates active + not-expired + min-order in one SQL query; <code>discountFor()</code> computes the amount, capped
+at the subtotal.</p></div>
+
+<div class="qa"><p class="q">Q33. What payment methods exist?</p>
+<p class="a">Cash on Delivery, Card, and UPI (mock). UPI additionally requires uploading a payment screenshot, which
+the admin later verifies.</p></div>
+
+<div class="qa"><p class="q">Q34. How does file upload work?</p>
+<p class="a">The servlet is annotated <code>@MultipartConfig</code>. Uploaded images are saved under
+<code>assets/images/items</code> or <code>/payments</code> with a unique timestamped filename; the DB stores the
+relative path.</p></div>
+
+<div class="qa"><p class="q">Q35. What is dine-in ordering?</p>
+<p class="a">A reservation can flow straight into a food order; the table name replaces the delivery address, and the
+finished order is linked back to the reservation via <code>linkOrder()</code>.</p></div>
+
+<div class="qa"><p class="q">Q36. How does the AI chat work without leaking the API key?</p>
+<p class="a">The browser calls our own <code>/chat</code> endpoint; the server (<code>ChatService</code>) forwards the
+message to NVIDIA’s API with the secret key held server-side and returns only the reply text as JSON.</p></div>
+
+<div class="qa"><p class="q">Q37. What is a Filter and what does JspUrlFilter do?</p>
+<p class="a">A Filter intercepts requests before they reach a servlet. <code>JspUrlFilter</code> redirects
+extension-less page GETs to their <code>.jsp</code> form so the address bar shows <code>.jsp</code>, without changing
+any internal routing.</p></div>
+
+<div class="qa"><p class="q">Q38. How are dashboard metrics computed?</p>
+<p class="a">With <code>COUNT(*)</code> queries per status/entity (orders by status, item count, feedback count, open
+complaints, active coupons), gathered in <code>showAdminDashboard()</code>.</p></div>
+
+<h3>E. Java &amp; Tooling</h3>
+
+<div class="qa"><p class="q">Q39. What is a POJO / JavaBean?</p>
+<p class="a">A Plain Old Java Object with private fields, public getters/setters and a no-arg constructor. Foodie’s
+model classes are JavaBeans so JSP EL can read their properties.</p></div>
+
+<div class="qa"><p class="q">Q40. What is the Singleton pattern? Where is it used?</p>
+<p class="a">A class with a single shared instance. <code>ChatService</code> exposes <code>getInstance()</code>;
+<code>DatabaseManager</code> is effectively a static singleton (private constructor, static methods).</p></div>
+
+<div class="qa"><p class="q">Q41. How is the project built without Maven?</p>
+<p class="a">Directly with <code>javac</code>, pointing the classpath at Tomcat’s <code>servlet-api.jar</code> and the
+Postgres driver, compiling all four packages into <code>WEB-INF/classes</code>.</p></div>
+
+<div class="qa"><p class="q">Q42. How do you deploy a new build to a running Tomcat?</p>
+<p class="a">Recompile the classes, then <code>touch WEB-INF/web.xml</code>; Tomcat detects the descriptor change and
+reloads the web-app context automatically.</p></div>
+
+<div class="qa"><p class="q">Q43. What is a WAR / context path?</p>
+<p class="a">A WAR is a packaged web-app. The context path is the URL prefix for the app — here <code>/foodie</code>
+locally, or root <code>/</code> in the Docker/Railway deployment.</p></div>
+
+<div class="qa"><p class="q">Q44. What does <code>request.setAttribute</code> vs a session attribute mean?</p>
+<p class="a">A request attribute lives for one request (used to pass data to a JSP during forward); a session
+attribute persists across requests for one user (used for login identity and the cart).</p></div>
+
+<div class="qa"><p class="q">Q45. What is Expression Language (EL) in JSP?</p>
+<p class="a">A concise syntax like <code>${pageContext.request.contextPath}</code> to access objects/properties without
+Java scriptlets.</p></div>
+
+<div class="qa"><p class="q">Q46. How does the app run in the cloud?</p>
+<p class="a">A Dockerfile builds a Tomcat-9-on-JRE-21 image, copies the app to the root context, and
+<code>entrypoint.sh</code> binds Tomcat to Railway’s <code>$PORT</code>. <code>railway.json</code> configures the
+build and restart policy.</p></div>
+
+<div class="qa"><p class="q">Q47. What are multi-tenancy hints in the schema (<code>tenant_id</code>)?</p>
+<p class="a">A <code>tenant_id</code> column exists on users and orders to support multiple restaurants/branches in
+future; currently it defaults to 1.</p></div>
+
+<div class="qa"><p class="q">Q48. How would you scale or improve this project?</p>
+<p class="a">Add a connection pool (HikariCP), hash passwords, add CSRF protection, move secrets to env vars,
+introduce a service layer, add REST/JSON APIs, unit tests, and real payment-gateway integration.</p></div>
+
+<div class="qa"><p class="q">Q49. Why store the delivery address as the table name for dine-in?</p>
+<p class="a">Because a dine-in order has no delivery address; using “Dine-in — Table X” keeps a single, uniform order
+schema for both delivery and dine-in.</p></div>
+
+<div class="qa"><p class="q">Q50. What happens on logout?</p>
+<p class="a"><code>session.invalidate()</code> destroys the session (clearing identity and cart), then the user is
+redirected to the home page.</p></div>
+
+<h3>F. Rapid-fire one-liners</h3>
+<table>
+<tr><th>Question</th><th>Answer</th></tr>
+<tr><td>Server used?</td><td>Apache Tomcat 9</td></tr>
+<tr><td>Servlet API version?</td><td>4.0 (Java EE / <code>javax.servlet</code>)</td></tr>
+<tr><td>Java version?</td><td>21</td></tr>
+<tr><td>Database?</td><td>PostgreSQL (Neon cloud)</td></tr>
+<tr><td>JDBC driver?</td><td>postgresql-42.7.4.jar</td></tr>
+<tr><td>Default admin?</td><td>admin@gmail.com / admin123</td></tr>
+<tr><td>Roles?</td><td>USER, RIDER, ADMIN</td></tr>
+<tr><td>Cart storage?</td><td>HttpSession (Map itemId→qty)</td></tr>
+<tr><td>Password storage?</td><td>Plain text (improvement: BCrypt)</td></tr>
+<tr><td>Coupon types?</td><td>PERCENT, FLAT</td></tr>
+<tr><td>Order statuses?</td><td>PENDING, ACCEPTED, PICKED_UP, DELIVERED, REJECTED, CANCELLED</td></tr>
+<tr><td>Users table name?</td><td><code>resturent</code> (misspelt on purpose)</td></tr>
+<tr><td>AI model?</td><td>NVIDIA LLaMA-3.1-8B-instruct</td></tr>
+<tr><td>Deployment?</td><td>Docker image on Railway</td></tr>
+<tr><td>Build tool?</td><td>None — raw <code>javac</code></td></tr>
+</table>
+
+<!-- ============ 20. GLOSSARY ============ -->
+<h2 id="glossary">20. Glossary of Key Terms</h2>
+<table>
+<tr><th>Term</th><th>Meaning</th></tr>
+<tr><td>Servlet</td><td>Java class handling HTTP requests inside a web container</td></tr>
+<tr><td>JSP</td><td>HTML template with embedded Java, compiled to a servlet</td></tr>
+<tr><td>MVC</td><td>Model-View-Controller separation of concerns</td></tr>
+<tr><td>Front Controller</td><td>Single servlet routing all requests</td></tr>
+<tr><td>DAO</td><td>Data Access Object — class encapsulating a table’s SQL</td></tr>
+<tr><td>JDBC</td><td>Java Database Connectivity API</td></tr>
+<tr><td>PreparedStatement</td><td>Pre-compiled parameterised SQL (prevents injection)</td></tr>
+<tr><td>HttpSession</td><td>Per-user server-side state across requests</td></tr>
+<tr><td>Filter</td><td>Interceptor that runs before servlets</td></tr>
+<tr><td>Forward</td><td>Server-side dispatch within one request</td></tr>
+<tr><td>Redirect</td><td>Browser makes a new request to a new URL</td></tr>
+<tr><td>PRG</td><td>Post-Redirect-Get anti-duplicate-submit pattern</td></tr>
+<tr><td>RBAC</td><td>Role-Based Access Control</td></tr>
+<tr><td>POJO / JavaBean</td><td>Plain data object with getters/setters</td></tr>
+<tr><td>Context path</td><td>URL prefix of the deployed web-app</td></tr>
+<tr><td>Deployment descriptor</td><td><code>web.xml</code> configuration file</td></tr>
+</table>
+
+<p class="footer-note">Foodie — Online Food Ordering &amp; Restaurant Management System · Java Servlets, JSP,
+JDBC &amp; PostgreSQL · Generated project documentation &amp; viva guide.</p>
+
+</div>
+</body>
+</html>
