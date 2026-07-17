@@ -48,6 +48,7 @@ public class OrderDao {
             "tenant_id INTEGER NOT NULL DEFAULT 1, " +
             "address VARCHAR(512), " +
             "phone VARCHAR(40), " +
+            "email VARCHAR(255), " +
             "payment_method VARCHAR(20), " +
             "total NUMERIC(10,2) NOT NULL DEFAULT 0, " +
             "status VARCHAR(20) NOT NULL DEFAULT 'PENDING', " +
@@ -85,6 +86,7 @@ public class OrderDao {
             st.execute("ALTER TABLE orders ADD COLUMN IF NOT EXISTS discount NUMERIC(10,2) NOT NULL DEFAULT 0");
             st.execute("ALTER TABLE orders ADD COLUMN IF NOT EXISTS payment_proof VARCHAR(255)");
             st.execute("ALTER TABLE orders ADD COLUMN IF NOT EXISTS rating INTEGER");
+            st.execute("ALTER TABLE orders ADD COLUMN IF NOT EXISTS email VARCHAR(255)");
         }
     }
 
@@ -99,9 +101,9 @@ public class OrderDao {
      */
     public int createOrder(Order order, List<OrderItem> items) throws SQLException {
         final String orderSql =
-            "INSERT INTO orders (order_code, user_id, customer_name, tenant_id, address, phone, " +
+            "INSERT INTO orders (order_code, user_id, customer_name, tenant_id, address, phone, email, " +
             "payment_method, total, status, table_id, table_name, coupon_code, discount, payment_proof) " +
-            "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+            "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
         final String itemSql =
             "INSERT INTO order_items (order_id, item_id, item_name, price, quantity) " +
             "VALUES (?, ?, ?, ?, ?)";
@@ -119,18 +121,19 @@ public class OrderDao {
                 ps.setInt(4, order.getTenantId());
                 ps.setString(5, order.getAddress());
                 ps.setString(6, order.getPhone());
-                ps.setString(7, order.getPaymentMethod());
-                ps.setDouble(8, order.getTotal());
-                ps.setString(9, PENDING);
+                ps.setString(7, order.getEmail());
+                ps.setString(8, order.getPaymentMethod());
+                ps.setDouble(9, order.getTotal());
+                ps.setString(10, PENDING);
                 if (order.getTableId() > 0) {
-                    ps.setInt(10, order.getTableId());
+                    ps.setInt(11, order.getTableId());
                 } else {
-                    ps.setNull(10, java.sql.Types.INTEGER);
+                    ps.setNull(11, java.sql.Types.INTEGER);
                 }
-                ps.setString(11, order.getTableName());
-                ps.setString(12, order.getCouponCode());
-                ps.setDouble(13, order.getDiscount());
-                ps.setString(14, order.getPaymentProof());
+                ps.setString(12, order.getTableName());
+                ps.setString(13, order.getCouponCode());
+                ps.setDouble(14, order.getDiscount());
+                ps.setString(15, order.getPaymentProof());
                 ps.executeUpdate();
 
                 try (ResultSet keys = ps.getGeneratedKeys()) {
@@ -234,6 +237,7 @@ public class OrderDao {
         o.setTenantId(rs.getInt("tenant_id"));
         o.setAddress(rs.getString("address"));
         o.setPhone(rs.getString("phone"));
+        o.setEmail(rs.getString("email"));
         o.setPaymentMethod(rs.getString("payment_method"));
         o.setTotal(rs.getDouble("total"));
         o.setStatus(rs.getString("status"));

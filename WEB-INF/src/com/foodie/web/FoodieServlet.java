@@ -1,6 +1,7 @@
 package com.foodie.web;
 
 import com.foodie.chat.ChatService;
+import com.foodie.mail.MailService;
 import com.foodie.db.ComplaintDao;
 import com.foodie.db.CouponDao;
 import com.foodie.db.FeedbackDao;
@@ -934,7 +935,13 @@ public class FoodieServlet extends HttpServlet {
         int id = parseIntSafe(param(req, "id"), -1);
         try {
             if (id > 0 && "accept".equals(action)) {
-                orderDao.updateStatus(id, OrderDao.ACCEPTED);
+                boolean ok = orderDao.updateStatus(id, OrderDao.ACCEPTED);
+                if (ok) {
+                    // Re-load to pick up the delivery PIN assigned on acceptance,
+                    // then email it to the customer (fire-and-forget).
+                    Order accepted = orderDao.findById(id);
+                    MailService.getInstance().sendDeliveryPin(accepted);
+                }
             } else if (id > 0 && "reject".equals(action)) {
                 orderDao.updateStatus(id, OrderDao.REJECTED);
             }
@@ -1207,6 +1214,7 @@ public class FoodieServlet extends HttpServlet {
 
         String address = param(req, "address");
         String phone   = param(req, "phone");
+        String email   = param(req, "email");
         String payment = param(req, "payment_method");
 
         // Dine-in context: an order started from a table reservation. The table
@@ -1220,8 +1228,8 @@ public class FoodieServlet extends HttpServlet {
         }
 
         boolean addressOk = dineIn || !blank(address);
-        if (!addressOk || blank(phone) || blank(payment)) {
-            req.setAttribute("checkoutMessage", msg("error", "Address, phone and payment method are required."));
+        if (!addressOk || blank(phone) || blank(email) || blank(payment)) {
+            req.setAttribute("checkoutMessage", msg("error", "Address, phone, email and payment method are required."));
             showCheckout(req, res);
             return;
         }
@@ -1282,6 +1290,7 @@ public class FoodieServlet extends HttpServlet {
             order.setTenantId(intAttr(session, "tenantId") > 0 ? intAttr(session, "tenantId") : 1);
             order.setAddress(address);
             order.setPhone(phone);
+            order.setEmail(email);
             order.setPaymentMethod(payment);
             order.setCouponCode(couponCode);
             order.setDiscount(discount);
@@ -1297,6 +1306,11 @@ public class FoodieServlet extends HttpServlet {
             if (newId > 0) {
                 cart.clear();
                 session.removeAttribute("checkoutCoupon");
+                // Confirmation email with the itemised bill (fire-and-forget; never blocks checkout).
+                order.setId(newId);
+                order.setStatus(OrderDao.PENDING);
+                order.setItems(lines);
+                MailService.getInstance().sendOrderConfirmation(order);
                 if (dineIn) {
                     // Link the order to its reservation and clear the dine-in context.
                     if (resvId > 0) {

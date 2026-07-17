@@ -11,6 +11,7 @@ public class Order {
     private int tenantId;
     private String address;
     private String phone;
+    private String email;
     private String paymentMethod;
     private double total;
     private String status;
@@ -82,6 +83,14 @@ public class Order {
 
     public void setPhone(String phone) {
         this.phone = phone;
+    }
+
+    public String getEmail() {
+        return email;
+    }
+
+    public void setEmail(String email) {
+        this.email = email;
     }
 
     public String getPaymentMethod() {

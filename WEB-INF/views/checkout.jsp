@@ -62,6 +62,10 @@
                     <input type="tel" name="phone" required placeholder="e.g. 03001234567" />
                 </div>
                 <div class="form-row">
+                    <label>Email address</label>
+                    <input type="email" name="email" required placeholder="e.g. you@example.com" />
+                </div>
+                <div class="form-row">
                     <label>Payment method</label>
                     <div class="payment-options">
                         <label class="payment-option"><input type="radio" name="payment_method" value="CARD" checked onclick="togglePay()"> Card</label>
