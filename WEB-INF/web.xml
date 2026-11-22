@@ -23,6 +23,19 @@
     <servlet-class>com.foodie.web.FoodieServlet</servlet-class>
   </servlet>
 
+  <servlet>
+    <servlet-name>UpiPaymentServlet</servlet-name>
+    <servlet-class>com.foodie.web.UpiPaymentServlet</servlet-class>
+  </servlet>
+
+  <servlet-mapping>
+    <servlet-name>UpiPaymentServlet</servlet-name>
+    <url-pattern>/payment/upi/create</url-pattern>
+    <url-pattern>/payment/upi/status</url-pattern>
+    <url-pattern>/payment/upi/return</url-pattern>
+    <url-pattern>/payment/upi/webhook</url-pattern>
+  </servlet-mapping>
+
   <!-- Each route is mapped both clean (used by form POSTs and internal
        redirects) and with a ".jsp" suffix (what the browser now shows). The
        servlet strips the suffix before routing (FoodieServlet.route). -->

@@ -21,8 +21,8 @@ import javax.servlet.http.HttpServletResponse;
  * before routing, so every existing route keeps working.</p>
  *
  * <p>Left untouched: non-GET requests (form posts, the {@code /chat} AJAX call),
- * anything that already carries an extension (static assets, {@code *.jsp}), and
- * the site root.</p>
+ * payment API/return endpoints under {@code /payment/}, anything that already
+ * carries an extension (static assets, {@code *.jsp}), and the site root.</p>
  */
 public class JspUrlFilter implements Filter {
 
@@ -52,6 +52,9 @@ public class JspUrlFilter implements Filter {
         String path = req.getServletPath();
         if (path == null || path.isEmpty() || "/".equals(path)) {
             return false; // leave the site root alone
+        }
+        if (path.startsWith("/payment/")) {
+            return false; // leave payment API/return endpoints alone
         }
         // Last segment already carries a "." (static asset, or already .jsp) -> leave it.
         String lastSegment = path.substring(path.lastIndexOf('/') + 1);
