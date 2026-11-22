@@ -29,7 +29,8 @@ import java.util.logging.Logger;
  * <p>Config keys (environment variables first, then {@code db.properties}):</p>
  * <ul>
  *   <li>{@code UPI_GATEWAY_BASE_URL} / {@code upi.gateway.base.url} — required,
- *       e.g. {@code https://your-upi-gateway.example.com}.</li>
+ *       e.g. {@code https://your-upi-gateway.example.com} (trailing
+ *       {@code /api/v1} is stripped automatically if included).</li>
  *   <li>{@code UPI_GATEWAY_API_KEY} / {@code upi.gateway.api.key} — required
  *       ({@code X-Api-Key}; keys prefixed with {@code test_key_} automatically
  *       use the gateway's sandbox environment).</li>
@@ -78,7 +79,7 @@ public final class UpiGatewayService {
             LOGGER.log(Level.SEVERE, "Failed to load UPI gateway configuration", e);
         }
 
-        this.baseUrl = stripTrailingSlash(url);
+        this.baseUrl = normalizeBaseUrl(url);
         this.apiKey = key;
         this.apiSecret = secret;
         this.paymentAccountId = parsePositiveInt(accIdRaw);
@@ -485,6 +486,18 @@ public final class UpiGatewayService {
         if (a != null && !a.trim().isEmpty()) return a.trim();
         if (b != null && !b.trim().isEmpty()) return b.trim();
         return null;
+    }
+
+    private static String normalizeBaseUrl(String url) {
+        String s = stripTrailingSlash(url);
+        if (s == null) return null;
+        String lower = s.toLowerCase(Locale.ROOT);
+        if (lower.endsWith("/api/v1/orders")) {
+            s = s.substring(0, s.length() - "/api/v1/orders".length());
+        } else if (lower.endsWith("/api/v1")) {
+            s = s.substring(0, s.length() - "/api/v1".length());
+        }
+        return stripTrailingSlash(s);
     }
 
     private static String stripTrailingSlash(String url) {
