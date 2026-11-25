@@ -7,7 +7,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Checkout | Foodie</title>
-    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/style.css?v=20">
+    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/style.css?v=21">
     <script src="${pageContext.request.contextPath}/assets/js/theme.js?v=2"></script>
 </head>
 <body class="dashboard-page checkout-page">
@@ -148,6 +148,10 @@
         <div class="upi-head">
             <h2 id="upiTitle">Pay with UPI</h2>
             <p id="upiSubhead">Foodie Restaurant Private Limited</p>
+            <div class="upi-powered-by" aria-label="Foodie payments powered by eMudra">
+                <span>Powered by</span>
+                <img src="${pageContext.request.contextPath}/assets/images/payments/emudra-secure-payment-logo.png" alt="eMudra payment gateway" width="100" height="50" loading="lazy" decoding="async" />
+            </div>
         </div>
 
         <div class="upi-body" id="upiPayStage">

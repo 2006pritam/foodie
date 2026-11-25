@@ -2855,8 +2855,29 @@ html[data-theme="dark"] .menu-search-input {
 }
 .upi-head { text-align: center; margin-bottom: 18px; }
 .upi-head h2 { margin: 0; color: var(--rich-black-fogra-29); }
-.upi-head p { color: var(--deep-saffron); font-weight: 600; }
+.upi-head p { color: var(--deep-saffron); font-weight: 600; margin: 6px 0 0; }
 .upi-body { display: flex; flex-direction: column; align-items: center; gap: 16px; }
+.upi-powered-by {
+  margin-top: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  color: var(--spanish-gray);
+  font-size: 1.1rem;
+  font-weight: 600;
+}
+.upi-powered-by img {
+  display: block;
+  width: 74px;
+  height: auto;
+  padding: 2px 4px;
+  background: #ffffff;
+  border-radius: 5px;
+}
+@media (max-width: 380px) {
+  .upi-powered-by { gap: 4px; font-size: 1rem; }
+}
 .upi-qr {
   width: 212px;
   height: 212px;
@@ -2906,6 +2927,7 @@ html[data-theme="dark"] .upi-modal { background: #171e28; color: #e8edf5; }
 html[data-theme="dark"] .upi-head h2,
 html[data-theme="dark"] .upi-timer { color: #e8edf5; }
 html[data-theme="dark"] .upi-upload { color: #e8edf5; }
+html[data-theme="dark"] .upi-powered-by { color: #aeb8c8; }
 .upi-proof-link { color: var(--deep-saffron); font-size: 1.3rem; text-decoration: underline; }
 
 /* Admin payment proof (orders page) */
@@ -3666,6 +3688,12 @@ html[data-theme="dark"] .blog-card .card-title { color: #cbd4e1; }
 .receipt-modal .r-line { border-top: 1px dashed #999; margin: 12px 0; }
 .receipt-row { display: flex; justify-content: space-between; font-size: 1.3rem; margin: 3px 0; }
 .receipt-row span:last-child { font-weight: 700; text-align: right; }
+.receipt-payment-status span:last-child {
+  color: #166534;
+  background: #dcfce7;
+  border-radius: 999px;
+  padding: 2px 8px;
+}
 .receipt-section-title { font-weight: 700; font-size: 1.3rem; margin-bottom: 4px; letter-spacing: 1px; }
 .receipt-muted { font-size: 1.3rem; color: #333; margin: 2px 0; }
 

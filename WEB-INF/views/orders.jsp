@@ -29,6 +29,12 @@
     boolean cancellable(String status) {
         return "PENDING".equals(status) || "ACCEPTED".equals(status);
     }
+    boolean gatewayPaidUpi(Order order) {
+        return order != null
+                && "UPI".equalsIgnoreCase(order.getPaymentMethod())
+                && order.getPaymentProof() != null
+                && order.getPaymentProof().startsWith("UPI Gateway ");
+    }
     // HTML-escape for safe rendering of user-supplied order fields on the receipt.
     String esc(String v) {
         if (v == null) return "";
@@ -42,7 +48,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>My Orders | Foodie</title>
-    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/style.css?v=20">
+    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/style.css?v=21">
     <script src="${pageContext.request.contextPath}/assets/js/theme.js?v=2"></script>
 </head>
 <body class="dashboard-page orders-page">
@@ -193,6 +199,10 @@
                     <div class="receipt-row"><span>Table:</span><span><%= esc(o.getTableName()) %></span></div>
                 <% } %>
                 <div class="receipt-row"><span>Status:</span><span><%= label(o.getStatus()) %></span></div>
+                <div class="receipt-row"><span>Payment method:</span><span><%= esc(o.getPaymentMethod()) %></span></div>
+                <% if (gatewayPaidUpi(o)) { %>
+                    <div class="receipt-row receipt-payment-status"><span>Payment status:</span><span>Already Paid</span></div>
+                <% } %>
                 <div class="r-line"></div>
                 <div class="receipt-section-title">CUSTOMER</div>
                 <p class="receipt-muted"><%= esc(o.getCustomerName()) %></p>
